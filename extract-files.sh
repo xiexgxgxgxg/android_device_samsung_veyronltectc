@@ -1,30 +1,41 @@
 #!/bin/bash
 #
-# Copyright (C) 2016 The CyanogenMod Project
-# Copyright (C) 2017-2020 The LineageOS Project
+# Pull the blobs listed in proprietary-files.txt into vendor/samsung/veyronltectc.
+# Usage: ./extract-files.sh [adb|/path/to/system_dump]
 #
-# SPDX-License-Identifier: Apache-2.0
-#
-
-function blob_fixup() {
-    case "${1}" in
-    vendor/lib64/libsec-ril.so)
-        sed -i "s/libhidltransport.so/libcutils-v29.so\x00\x00\x00/" "${2}"
-        "${PATCHELF}" --replace-needed "libprotobuf-cpp-full.so" "libprotobuf-cpp-full-v28.so" "${2}"
-        ;;
-    esac
-}
-
-# If we're being sourced by the common script that we called,
-# stop right here. No need to go down the rabbit hole.
-if [ "${BASH_SOURCE[0]}" != "${0}" ]; then
-    return
-fi
-
 set -e
 
-export DEVICE=veyronltectc
-export DEVICE_COMMON=msm8996-common
-export VENDOR=samsung
+MY_DIR="${BASH_SOURCE%/*}"
+ANDROID_ROOT="${MY_DIR}/../../.."
+HELPER="${ANDROID_ROOT}/tools/extract-utils/extract_utils.sh"
 
-"./../../${VENDOR}/${DEVICE_COMMON}/extract-files.sh" "$@"
+if [ ! -f "${HELPER}" ]; then
+    echo "Unable to find ${HELPER} — run this from a LineageOS 18.1 tree"
+    exit 1
+fi
+source "${HELPER}"
+
+CLEAN_VENDOR=true
+SECTION=
+SRC=
+
+while [ "${#}" -gt 0 ]; do
+    case "${1}" in
+        -n | --no-cleanup ) CLEAN_VENDOR=false ;;
+        -s | --section ) SECTION="${2}"; shift ;;
+        * ) SRC="${1}" ;;
+    esac
+    shift
+done
+[ -z "${SRC}" ] && SRC="adb"
+
+setup_vendor "veyronltectc" "samsung" "${ANDROID_ROOT}" false
+
+if [ "${CLEAN_VENDOR}" = true ]; then
+    rm -rf "${ANDROID_ROOT}/vendor/samsung/veyronltectc/proprietary"
+fi
+
+MERGED="${MY_DIR}/.merged-proprietary-files.txt"
+cat "${MY_DIR}/common/proprietary-files.txt" "${MY_DIR}/proprietary-files.txt" > "${MERGED}"
+trap 'rm -f "${MERGED}"' EXIT
+extract "${MERGED}" "${SRC}"
