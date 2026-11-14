@@ -33,13 +33,11 @@ PRODUCT_MANUFACTURER := samsung
 
 PRODUCT_GMS_CLIENTID_BASE := android-samsung
 
-# TODO: replace with the real fingerprint read from the device
-#   adb shell getprop ro.build.fingerprint
-# The values below are a placeholder based on the last known CTC build
-# (W2017KEU1ARG1, Android 6.0.1) and MUST be corrected before shipping.
+# Fingerprint taken from the stock W2017KEU1ARG1 system build.prop:
+#   samsung/veyronltectc/veyronltectc:6.0.1/MMB29M/W2017KEU1ARG1:user/release-keys
 PRODUCT_BUILD_PROP_OVERRIDES += \
     PRODUCT_NAME=veyronltectc \
-    PRIVATE_BUILD_DESC="veyronltectc-user 6.0.1 MMB29K W2017KEU1ARG1 release-keys"
+    PRIVATE_BUILD_DESC="veyronltectc-user 6.0.1 MMB29M W2017KEU1ARG1 release-keys"
 
 # Set BUILD_FINGERPRINT variable to be picked up by both system and vendor build.prop
-BUILD_FINGERPRINT := "samsung/veyronltectc/veyronltectc:6.0.1/MMB29K/W2017KEU1ARG1:user/release-keys"
+BUILD_FINGERPRINT := "samsung/veyronltectc/veyronltectc:6.0.1/MMB29M/W2017KEU1ARG1:user/release-keys"

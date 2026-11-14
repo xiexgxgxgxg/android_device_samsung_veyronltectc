@@ -16,8 +16,5 @@ source "${HELPER}"
 
 setup_vendor "veyronltectc" "samsung" "${ANDROID_ROOT}" false
 write_headers "veyronltectc"
-MERGED="${MY_DIR}/.merged-proprietary-files.txt"
-cat "${MY_DIR}/common/proprietary-files.txt" "${MY_DIR}/proprietary-files.txt" > "${MERGED}"
-trap 'rm -f "${MERGED}"' EXIT
-write_makefiles "${MERGED}" true
+write_makefiles "${MY_DIR}/proprietary-files.txt" true
 write_footers

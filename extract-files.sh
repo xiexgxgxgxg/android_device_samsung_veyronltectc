@@ -35,7 +35,4 @@ if [ "${CLEAN_VENDOR}" = true ]; then
     rm -rf "${ANDROID_ROOT}/vendor/samsung/veyronltectc/proprietary"
 fi
 
-MERGED="${MY_DIR}/.merged-proprietary-files.txt"
-cat "${MY_DIR}/common/proprietary-files.txt" "${MY_DIR}/proprietary-files.txt" > "${MERGED}"
-trap 'rm -f "${MERGED}"' EXIT
-extract "${MERGED}" "${SRC}"
+extract "${MY_DIR}/proprietary-files.txt" "${SRC}"
