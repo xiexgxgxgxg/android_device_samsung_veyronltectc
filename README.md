@@ -42,6 +42,9 @@
   (`drivers/video/msm/mdss/`, `samsung,mdss_dsi_lcd_sel_gpio`,
   `folder_hall`), and no upstream msm8996 kernel has it.
 * Vendor: `android_vendor_samsung_veyronltectc` (standalone, no common vendor repo).
+* `hardware/samsung` is required: the common config sets
+  `BOARD_CUSTOM_BOOTIMG_MK := hardware/samsung/mkbootimg.mk`, and the product
+  pulls `macloader` and the Samsung RIL helpers from it.
 
 ## What works
 
@@ -76,6 +79,9 @@ Nothing. This is an untested skeleton.
         revision="lineage-18.1" />
     <project name="xiexgxgxgxg/android_kernel_samsung_veyronltectc"
         path="kernel/samsung/msm8996"
+        revision="lineage-18.1" />
+    <project name="xiexgxgxgxg/android_hardware_samsung"
+        path="hardware/samsung"
         revision="lineage-18.1" />
 </manifest>
 ```
