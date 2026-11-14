@@ -52,9 +52,8 @@ Nothing. This is an untested skeleton.
 
 ## TODO
 
-- [ ] Vendor blobs: extract from the device / stock firmware, regenerate
-      `proprietary-files.txt` (the current list is inherited from heroqlte and is
-      **wrong** for this device)
+- [x] Vendor blobs: extracted from `W2017KEU1ARG1` (894 files) into
+      `android_vendor_samsung_veyronltectc`
 - [ ] Kernel: build `veyronlte_ctc_defconfig`, backport 18.1 requirements
       (binder, sdcardfs/FUSE, SELinux, quota, wifi driver)
 - [ ] Verify partition layout / fstab against the real PIT
@@ -64,7 +63,7 @@ Nothing. This is an untested skeleton.
 - [ ] Camera: 6.0.1 HAL1 blobs on Pie
 - [ ] Audio, sensors, fingerprint, GPS
 - [ ] SELinux policy
-- [ ] `BUILD_FINGERPRINT` placeholder → real value from device
+- [x] `BUILD_FINGERPRINT` set from the stock ARG1 build.prop
 
 ## Local manifest
 
