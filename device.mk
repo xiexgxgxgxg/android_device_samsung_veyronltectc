@@ -50,5 +50,5 @@ PRODUCT_PACKAGES += \
     libxml2 \
     libprotobuf-cpp-full
 
-# Inherit from msm8996-common
-$(call inherit-product, device/samsung/msm8996-common/msm8996.mk)
+# Inherit from the inlined msm8996 common makefile
+$(call inherit-product, $(LOCAL_PATH)/common/msm8996.mk)

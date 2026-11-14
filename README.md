@@ -30,11 +30,18 @@
   to work.
 * **China-only firmware.** No Treble, no vendor partition, blobs are 6.0.1-era.
 
-## Provenance
+## Provenance and layout
 
 * Structure: `ivanmeler/android_device_samsung_heroqlte` (`lineage-18.1`)
-* Common tree: `device/samsung/msm8996-common` (same org)
-* Kernel: Samsung official msm8996 source (`veyronlte_ctc_defconfig`, Linux 3.18.20)
+* The shared msm8996 configs are **inlined under `common/`** — this tree needs no
+  external `device/samsung/msm8996-common` repo.
+* Kernel: dedicated fork of the Samsung W2017 source
+  (`android_kernel_samsung_veyronltectc`, `lineage-18.1`,
+  `veyronlte_ctc_defconfig`, Linux 3.18.20). It must stay dedicated: the stock
+  W2017 kernel is the only one that carries the dual-panel switch logic
+  (`drivers/video/msm/mdss/`, `samsung,mdss_dsi_lcd_sel_gpio`,
+  `folder_hall`), and no upstream msm8996 kernel has it.
+* Vendor: `android_vendor_samsung_veyronltectc` (standalone, no common vendor repo).
 
 ## What works
 
@@ -61,9 +68,6 @@ Nothing. This is an untested skeleton.
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>
 <manifest>
-    <project name="xiexgxgxgxg/android_device_samsung_msm8996-common"
-        path="device/samsung/msm8996-common"
-        revision="lineage-18.1" />
     <project name="xiexgxgxgxg/android_device_samsung_veyronltectc"
         path="device/samsung/veyronltectc"
         revision="lineage-18.1" />

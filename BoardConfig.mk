@@ -19,10 +19,10 @@
 # on hardware yet. Kernel config name comes from the official Samsung
 # msm8996 kernel source (arch/arm64/configs/veyronlte_ctc_defconfig).
 
-# inherit from common msm8996-common
--include device/samsung/msm8996-common/BoardConfigCommon.mk
-
 DEVICE_PATH := device/samsung/veyronltectc
+
+# Shared msm8996 board config (inlined in $(DEVICE_PATH)/common, no external common repo)
+-include $(DEVICE_PATH)/common/BoardConfigCommon.mk
 
 # Assert
 TARGET_OTA_ASSERT_DEVICE := veyronltectc,veyronlte,SM-W2017

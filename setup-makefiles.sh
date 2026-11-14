@@ -1,15 +1,23 @@
 #!/bin/bash
 #
-# Copyright (C) 2016 The CyanogenMod Project
-# Copyright (C) 2017-2020 The LineageOS Project
+# Regenerate vendor/samsung/veyronltectc makefiles from proprietary-files.txt.
 #
-# SPDX-License-Identifier: Apache-2.0
-#
-
 set -e
 
-export DEVICE=veyronltectc
-export DEVICE_COMMON=msm8996-common
-export VENDOR=samsung
+MY_DIR="${BASH_SOURCE%/*}"
+ANDROID_ROOT="${MY_DIR}/../../.."
+HELPER="${ANDROID_ROOT}/tools/extract-utils/extract_utils.sh"
 
-"./../../${VENDOR}/${DEVICE_COMMON}/setup-makefiles.sh" "$@"
+if [ ! -f "${HELPER}" ]; then
+    echo "Unable to find ${HELPER} — run this from a LineageOS 18.1 tree"
+    exit 1
+fi
+source "${HELPER}"
+
+setup_vendor "veyronltectc" "samsung" "${ANDROID_ROOT}" false
+write_headers "veyronltectc"
+MERGED="${MY_DIR}/.merged-proprietary-files.txt"
+cat "${MY_DIR}/common/proprietary-files.txt" "${MY_DIR}/proprietary-files.txt" > "${MERGED}"
+trap 'rm -f "${MERGED}"' EXIT
+write_makefiles "${MERGED}" true
+write_footers
