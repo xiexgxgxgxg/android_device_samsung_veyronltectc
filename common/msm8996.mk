@@ -215,7 +215,11 @@ PRODUCT_PACKAGES += \
     android.hardware.health@2.1-service
 
 # HIDL
-PRODUCT_ENFORCE_VINTF_MANIFEST_OVERRIDE := true
+# This device has no vendor partition and the 6.0.1 blobs only implement the
+# older HAL versions (audio@4.0, mapper@2.0), so the Android 11 compatibility
+# matrix cannot be satisfied. VINTF is not consulted at runtime without
+# Treble, so skip the build-time check.
+PRODUCT_ENFORCE_VINTF_MANIFEST := false
 
 PRODUCT_PACKAGES += \
     android.hidl.base@1.0 \
