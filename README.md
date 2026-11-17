@@ -1,11 +1,14 @@
 # LineageOS 18.1 device tree — Samsung W2017 (SM-W2017 / veyronlte CTC)
 
-> **STATUS: WORK IN PROGRESS — DOES NOT BOOT, DO NOT FLASH.**
+> **STATUS: WORK IN PROGRESS — BUILDS, NOT YET BOOTED.**
 >
-> This tree is a skeleton. It was generated from the
-> [heroqlte (Galaxy S7 QCOM)](https://github.com/ivanmeler/android_device_samsung_heroqlte)
-> lineage-18.1 tree and renamed for the W2017. Nothing here has been verified on
-> real hardware. Expect boot loops, missing HALs and broken RIL/camera/audio.
+> The lineage-18.1 **eng** build completes: a signed flashable package and
+> `system.img` / `boot.img` / `dt.img` are produced. The tree started life as a
+> copy of the [heroqlte (Galaxy S7 QCOM)](https://github.com/ivanmeler/android_device_samsung_heroqlte)
+> lineage-18.1 tree; the hardware-specific pieces were then checked against the
+> real phone (partition table, display, input) and the kernel/UAPI gaps were
+> fixed. Nothing has been booted on hardware yet — expect missing HALs and
+> broken RIL/camera/audio.
 
 ## Device
 
@@ -37,7 +40,7 @@
   external `device/samsung/msm8996-common` repo.
 * Kernel: dedicated fork of the Samsung W2017 source
   (`android_kernel_samsung_veyronltectc`, `lineage-18.1`,
-  `veyronlte_ctc_defconfig`, Linux 3.18.20). It must stay dedicated: the stock
+  `veyronlte_ctc_defconfig`, Linux 3.18.140). It must stay dedicated: the stock
   W2017 kernel is the only one that carries the dual-panel switch logic
   (`drivers/video/msm/mdss/`, `samsung,mdss_dsi_lcd_sel_gpio`,
   `folder_hall`), and no upstream msm8996 kernel has it.
@@ -48,21 +51,32 @@
 
 ## What works
 
-Nothing. This is an untested skeleton.
+* `lunch lineage_veyronltectc-eng && m` completes: `system.img` (1.7 GiB),
+  `boot.img` (with the 3.18.140 kernel and the four veyron DTBs), `dt.img`,
+  `recovery.img`.
+* `m bacon` produces `lineage-18.1-*-UNOFFICIAL-veyronltectc.zip`, signed with
+  the test keys.
+* The tree matches the hardware that was read back from the phone in TWRP:
+  partition sizes, 1080x1920 panels, keypad/touch input, BCM4358 Wi-Fi.
+
+Nothing has been booted yet.
 
 ## TODO
 
-- [x] Vendor blobs: extracted from `W2017KEU1ARG1` (894 files) into
+- [x] Vendor blobs: extracted from `W2017KEU1ARG1` (870 files) into
       `android_vendor_samsung_veyronltectc`
-- [ ] Kernel: build `veyronlte_ctc_defconfig`, backport 18.1 requirements
-      (binder, sdcardfs/FUSE, SELinux, quota, wifi driver)
-- [ ] Verify partition layout / fstab against the real PIT
+- [x] Kernel: build `veyronlte_ctc_defconfig` out-of-tree for LineageOS
+      (configfs, quota, memcg and the Android 11 userspace bits are still
+      pending; the tree builds and boots TWRP today)
+- [x] Verify partition layout / fstab against the real partition table
 - [ ] Keypad: `keylayout` / `keychars` from stock
 - [ ] Dual panel: verify Android behaves when the panel switches under it
 - [ ] RIL: Samsung SecRIL 6.0.1 → radio@1.4 / secbridge (hardest part)
 - [ ] Camera: 6.0.1 HAL1 blobs on Pie
 - [ ] Audio, sensors, fingerprint, GPS
-- [ ] SELinux policy
+- [ ] SELinux policy (currently permissive)
+- [ ] Wi-Fi firmware: `bcmdhd_*.bin` and `nvram_net.txt` are not in the blob set
+      yet
 - [x] `BUILD_FINGERPRINT` set from the stock ARG1 build.prop
 
 ## Local manifest
@@ -89,8 +103,20 @@ Nothing. This is an untested skeleton.
 
 ```bash
 source build/envsetup.sh
-lunch lineage_veyronltectc-userdebug
+lunch lineage_veyronltectc-eng
 mka bacon
 ```
 
-It will not build yet — the vendor tree has no blobs.
+The kernel is built with the prebuilt GCC 4.9 toolchain from
+`kernel/samsung/msm8996` and the 3.18 tree needs `HOSTCFLAGS=-fcommon`,
+`CONFIG_NO_ERROR_ON_MISMATCH=y` and lld for the host tools; all three are set in
+`common/BoardConfigCommon.mk`.
+
+Artifacts (eng):
+
+```
+out/target/product/veyronltectc/system.img
+out/target/product/veyronltectc/boot.img
+out/target/product/veyronltectc/dt.img
+out/target/product/veyronltectc/lineage-18.1-*-UNOFFICIAL-veyronltectc.zip
+```
