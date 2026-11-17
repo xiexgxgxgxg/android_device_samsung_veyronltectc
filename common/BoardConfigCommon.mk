@@ -67,8 +67,13 @@ TARGET_COMPILE_WITH_MSM_KERNEL := true
 # The kernel is a 3.18 tree built with the prebuilt GCC 4.9 toolchain, so the
 # host tools still need -fcommon (host GCC 10+ defaults to -fno-common), and
 # Samsung's modpost section mismatch check has to be relaxed for 3.18.140.
+# The host tools are compiled by clang, but 3.18 does not pass HOSTLDFLAGS to
+# the host link step. The Lineage kernel PATH does not include /usr/bin during
+# the Soong headers_install sandbox, so clang cannot find the system ld there;
+# keep -fuse-ld=lld in HOSTCFLAGS, clang then uses the lld next to itself.
 TARGET_KERNEL_ADDITIONAL_FLAGS := \
-    HOSTCFLAGS="-fcommon" \
+    HOSTCFLAGS="-fcommon -fuse-ld=lld" \
+    HOSTLDFLAGS="-L/usr/lib/x86_64-linux-gnu -L/usr/lib64 -fuse-ld=lld" \
     CONFIG_NO_ERROR_ON_MISMATCH=y
 
 # Platform
