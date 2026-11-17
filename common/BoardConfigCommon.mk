@@ -64,9 +64,12 @@ TARGET_KERNEL_ARCH := arm64
 TARGET_KERNEL_VERSION := 3.18
 TARGET_KERNEL_SOURCE := kernel/samsung/msm8996
 TARGET_COMPILE_WITH_MSM_KERNEL := true
+# The kernel is a 3.18 tree built with the prebuilt GCC 4.9 toolchain, so the
+# host tools still need -fcommon (host GCC 10+ defaults to -fno-common), and
+# Samsung's modpost section mismatch check has to be relaxed for 3.18.140.
 TARGET_KERNEL_ADDITIONAL_FLAGS := \
-    HOSTCFLAGS="-fuse-ld=lld -Wno-unused-command-line-argument" \
-    KBUILD_BUILD_USER=$(BUILD_USERNAME) KBUILD_BUILD_HOST=$(BUILD_HOSTNAME)
+    HOSTCFLAGS="-fcommon" \
+    CONFIG_NO_ERROR_ON_MISMATCH=y
 
 # Platform
 TARGET_BOARD_PLATFORM := msm8996
