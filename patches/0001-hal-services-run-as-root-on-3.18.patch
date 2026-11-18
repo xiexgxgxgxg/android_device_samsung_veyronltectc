@@ -1,35 +1,38 @@
 diff --git a/bluetooth/1.0/default/android.hardware.bluetooth@1.0-service.rc b/bluetooth/1.0/default/android.hardware.bluetooth@1.0-service.rc
-index def59de56..d7269edba 100644
+index def59de56..6125af0fc 100644
 --- a/bluetooth/1.0/default/android.hardware.bluetooth@1.0-service.rc
 +++ b/bluetooth/1.0/default/android.hardware.bluetooth@1.0-service.rc
-@@ -2,7 +2,7 @@ service vendor.bluetooth-1-0 /vendor/bin/hw/android.hardware.bluetooth@1.0-servi
+@@ -1,8 +1,7 @@
+ service vendor.bluetooth-1-0 /vendor/bin/hw/android.hardware.bluetooth@1.0-service
      interface android.hardware.bluetooth@1.0::IBluetoothHci default
      class hal
-     capabilities BLOCK_SUSPEND NET_ADMIN SYS_NICE
+-    capabilities BLOCK_SUSPEND NET_ADMIN SYS_NICE
 -    user bluetooth
 +    user root
      group bluetooth
      task_profiles HighPerformance
  
 diff --git a/wifi/1.4/default/android.hardware.wifi@1.0-service-lazy.rc b/wifi/1.4/default/android.hardware.wifi@1.0-service-lazy.rc
-index 061689dbe..59bc646b8 100644
+index 061689dbe..367c1d020 100644
 --- a/wifi/1.4/default/android.hardware.wifi@1.0-service-lazy.rc
 +++ b/wifi/1.4/default/android.hardware.wifi@1.0-service-lazy.rc
-@@ -8,5 +8,5 @@ service vendor.wifi_hal_legacy /vendor/bin/hw/android.hardware.wifi@1.0-service-
+@@ -7,6 +7,5 @@ service vendor.wifi_hal_legacy /vendor/bin/hw/android.hardware.wifi@1.0-service-
+     oneshot
      disabled
      class hal
-     capabilities NET_ADMIN NET_RAW SYS_MODULE
+-    capabilities NET_ADMIN NET_RAW SYS_MODULE
 -    user wifi
 +    user root
      group wifi gps
 diff --git a/wifi/1.4/default/android.hardware.wifi@1.0-service.rc b/wifi/1.4/default/android.hardware.wifi@1.0-service.rc
-index 64a51b0ae..d676f99f1 100644
+index 64a51b0ae..aa1ee68cc 100644
 --- a/wifi/1.4/default/android.hardware.wifi@1.0-service.rc
 +++ b/wifi/1.4/default/android.hardware.wifi@1.0-service.rc
-@@ -6,5 +6,5 @@ service vendor.wifi_hal_legacy /vendor/bin/hw/android.hardware.wifi@1.0-service
+@@ -5,6 +5,5 @@ service vendor.wifi_hal_legacy /vendor/bin/hw/android.hardware.wifi@1.0-service
+     interface android.hardware.wifi@1.3::IWifi default
      interface android.hardware.wifi@1.4::IWifi default
      class hal
-     capabilities NET_ADMIN NET_RAW SYS_MODULE
+-    capabilities NET_ADMIN NET_RAW SYS_MODULE
 -    user wifi
 +    user root
      group wifi gps

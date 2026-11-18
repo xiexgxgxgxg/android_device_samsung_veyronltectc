@@ -17,9 +17,16 @@ operation:
     E android.hardware.wifi@1.0-service: Failed to open socket to set up/down
                 state (Permission denied)
 
-Run them as root instead (uid 0 keeps its capabilities across exec on 3.18).
-Verified: both services show up as `root` in `ps`; the Bluetooth power write
-and the WiFi "set up/down" socket no longer fail with EPERM/EACCES.
+Run them as root **and drop the `capabilities` line**: on this kernel init's
+capability handling ends up clearing the set (`CapEff` was 0 even though the
+process was uid 0), which made the failures worse.  With `user root` and no
+`capabilities` line the services keep the full set:
+
+    # before                       # after
+    CapEff: 0000000000000000        CapEff: 0000003fffffffff
+
+Verified: WiFi reaches ConnectModeState with wlan0 UP (MAC a0:cc:2b:19:65:a1)
+and Bluetooth reaches state ON with address FC:42:03:F1:33:08.
 
 Apply:
     (cd hardware/interfaces && git apply ../../device/samsung/veyronltectc/patches/0001-hal-services-run-as-root-on-3.18.patch)
