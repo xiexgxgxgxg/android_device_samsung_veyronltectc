@@ -82,6 +82,7 @@ PRODUCT_PACKAGES += \
     android.hardware.gnss@1.0-impl \
     android.hardware.camera.provider@2.4-service \
     libcamparams_shim \
+    libcamparams_shim_sys \
     libnh_shim \
     com.dsi.ant.antradio_library
 

@@ -41,3 +41,18 @@ int64_t CameraParameters::getInt64(const char* key) const {
     return static_cast<int64_t>(get_int(this, key));
 }
 }  // namespace android
+
+// Android 6.0.1's DisplayEventReceiver had a no-argument constructor; Android
+// 11 replaced it with one taking a VsyncSource and a ConfigChanged.  The 6.0.1
+// camera HAL constructs it without arguments, so provide that entry point and
+// forward to the Android 11 constructor (defaults: app vsync, config changes
+// suppressed) through dlsym, since libgui is not vendor_available.
+extern "C" void display_event_receiver_ctor(void* self)
+        asm("_ZN7android20DisplayEventReceiverC1Ev");
+extern "C" void display_event_receiver_ctor(void* self) {
+    typedef void (*Ctor)(void*, int, int);
+    static Ctor ctor = reinterpret_cast<Ctor>(dlsym(
+            RTLD_DEFAULT,
+            "_ZN7android20DisplayEventReceiverC2ENS_16ISurfaceComposer11VsyncSourceENS1_13ConfigChangedE"));
+    if (ctor != nullptr) ctor(self, 0, 0);
+}
