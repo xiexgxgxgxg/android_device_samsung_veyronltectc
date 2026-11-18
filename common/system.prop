@@ -115,6 +115,16 @@ persist.debug.wfd.enable=1
 persist.sys.wfd.virtual=0
 
 # Debugging
+# ART's JIT code cache flush crashes on this 3.18 kernel (SEGV_ACCERR in
+# art::FlushCpuCaches) and kills zygote/system_server in a loop, so the
+# framework never comes up.  Disable the JIT for bring-up.
+dalvik.vm.usejit=false
+dalvik.vm.usejitprofiles=false
+# This 3.18 kernel has no PR_CAP_AMBIENT, so init drops the "capabilities"
+# line of logd.rc and logd cannot keep CAP_SYSLOG/CAP_AUDIT_CONTROL.  Start it
+# with the userspace sources only; the kernel buffer is read via dmesg/sdlog.
+ro.logd.kernel=false
+ro.logd.auditd=false
 # Keep a persistent logcat on /data/misc/logd so a boot loop can be diagnosed
 # from TWRP (mount /data, pull /data/misc/logd).  The kernel side is covered by
 # VEYRON_SDLOG, which writes dmesg to the SD card and survives a reset.
@@ -123,3 +133,6 @@ persist.logd.logpersistd.buffer=all
 persist.logd.logpersistd.rotate_kbytes=4096
 persist.logd.logpersistd.count=8
 persist.logd.size=4194304
+
+# W2017: the panel is mounted 180 degrees (image would be upside down otherwise)
+ro.surface_flinger.primary_display_orientation=ORIENTATION_180
