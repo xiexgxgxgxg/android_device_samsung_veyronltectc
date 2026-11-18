@@ -84,9 +84,14 @@ Nothing has been booted yet.
 Two independent channels survive a reset, so a ROM that never reaches the
 launcher can still be diagnosed:
 
-* **Kernel log:** `CONFIG_VEYRON_SDLOG` writes the dmesg tail to a raw area at
-  the end of the microSD card every 300 ms, from early boot. Insert a card
-  before flashing; decode the region with `/data/twrp/w2_audit/sdlog_decode.py`.
+* **Kernel log:** `CONFIG_VEYRON_SDLOG` appends the dmesg tail to a ring in a
+  raw area at the end of the microSD card every 300 ms, from early boot.  The
+  ring holds about 500 records (~150 s) and a superblock carries the position
+  across power cycles, so several failed boots survive -- and a TWRP boot only
+  overwrites the first slot, never the whole ring.  Insert a card before
+  flashing.  To read it, power off, take the card out and run
+  `/data/twrp/w2_audit/sdlog_decode.py /dev/sdX` on a PC; no phone boot, TWRP
+  or download mode is involved.
 * **Userspace log:** `persist.logd.logpersistd=logcatd` keeps logcat in
   `/data/misc/logd/`. From TWRP, mount `/data` and
   `adb pull /data/misc/logd/`.
