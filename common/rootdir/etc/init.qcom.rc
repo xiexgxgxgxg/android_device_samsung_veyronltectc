@@ -1022,3 +1022,11 @@ service sdmlogsd /system/bin/logcat -b all -v threadtime -f /mnt/sdcard/sdmlog.t
     user root
     group root system log
     oneshot
+
+# Vendor camera daemon for the 6.0.1 mm-camera2 stack; the camera HAL starts
+# it with ctl.start, so it has to exist as a service here.
+service mm-qcamera-daemon /vendor/bin/mm-qcamera-daemon
+    class late_start
+    user camera
+    group camera system inet input
+    disabled
