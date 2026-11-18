@@ -999,3 +999,26 @@ service vendor.audio-hal /vendor/bin/hw/android.hardware.audio.service
     ioprio rt 4
     writepid /dev/cpuset/foreground/tasks /dev/stune/foreground/tasks
     onrestart restart audioserver
+
+# W2017 bring-up: keep a logcat of the whole boot on /data.
+#
+# logcatd is class late_start, which the broken boots never reach, and the
+# display stack dies (SIGSEGV/SIGABRT) before that as well.  This service starts
+# right after post-fs-data and writes the same buffers to /data, so the crash
+# log survives the reboot and can be pulled from TWRP.
+on post-fs-data
+    mkdir /data/misc/sdmlog 0770 system system
+    mkdir /mnt/sdcard 0777 root root
+    mount vfat /dev/block/mmcblk0p1 /mnt/sdcard
+
+service sdmlog /system/bin/logcat -b all -v threadtime -f /data/misc/sdmlog/logcat -r 4096 -n 16
+    class core
+    user root
+    group root system log
+    oneshot
+
+service sdmlogsd /system/bin/logcat -b all -v threadtime -f /mnt/sdcard/sdmlog.txt -r 4096 -n 2
+    class core
+    user root
+    group root system log
+    oneshot
