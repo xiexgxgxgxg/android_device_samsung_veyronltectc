@@ -78,6 +78,8 @@ PRODUCT_PACKAGES += \
 # ANT+
 PRODUCT_PACKAGES += \
     AntHalService \
+    android.hardware.gnss@1.0-service \
+    android.hardware.gnss@1.0-impl \
     com.dsi.ant.antradio_library
 
 # Audio
