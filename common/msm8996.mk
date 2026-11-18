@@ -80,6 +80,8 @@ PRODUCT_PACKAGES += \
     AntHalService \
     android.hardware.gnss@1.0-service \
     android.hardware.gnss@1.0-impl \
+    android.hardware.camera.provider@2.4-service \
+    libnh_shim \
     com.dsi.ant.antradio_library
 
 # Audio
