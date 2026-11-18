@@ -1,14 +1,35 @@
 # LineageOS 18.1 device tree — Samsung W2017 (SM-W2017 / veyronlte CTC)
 
-> **STATUS: WORK IN PROGRESS — BUILDS, NOT YET BOOTED.**
+> **STATUS: BOOTS ON HARDWARE — display and input work, most peripherals do not (2026-11-18).**
 >
-> The lineage-18.1 **eng** build completes: a signed flashable package and
-> `system.img` / `boot.img` / `dt.img` are produced. The tree started life as a
-> copy of the [heroqlte (Galaxy S7 QCOM)](https://github.com/ivanmeler/android_device_samsung_heroqlte)
-> lineage-18.1 tree; the hardware-specific pieces were then checked against the
-> real phone (partition table, display, input) and the kernel/UAPI gaps were
-> fixed. Nothing has been booted on hardware yet — expect missing HALs and
-> broken RIL/camera/audio.
+> The eng build boots to the LineageOS setup wizard on the phone: both panels
+> light up with the correct orientation, the folder hall switches between
+> them, touch works and adb is up over USB. Audio, Wi-Fi, Bluetooth, camera,
+> RIL/baseband, fingerprint, GNSS, the T9 keypad mapping, the screen-on
+> brightness and an occasional soft reboot are still open.
+>
+> Item-by-item tracking (symptom / root cause / evidence / status / next step)
+> is in `W2017_LineageOS18.1_问题清单.md`; the bring-up log, the environment
+> and the failure analysis are in `W2017_LineageOS18.1_交接文档.md`.
+>
+> Boot-critical pieces that came out of that analysis:
+>
+> * the stock 6.0.1 SDM blobs were dropped — their C++ ABI does not match the
+>   Android 11 display HAL built from source here;
+> * the kernel's `mdp/caps` file now reports the pipe list the A11 SDM parses
+>   (it used to make SDM believe the MDP had zero pipes);
+> * the a530 GPU firmware and the Oreo-era Adreno userspace driver (from a
+>   Xiaomi Note 2 MIUI 11 image) are in the vendor tree;
+> * `ro.surface_flinger.primary_display_orientation=ORIENTATION_180`
+>   (both panels are mounted upside down);
+> * `dalvik.vm.usejit=false` (ART's JIT cache flush crashes zygote on this
+>   kernel).
+>
+> NOTE: as committed, `system_server` still blocks on
+> `android.hardware.gnss@1.0::IGnss/default` because the VINTF manifest
+> declares it and nothing provides it; adding
+> `android.hardware.gnss@1.0-service` (the AOSP wrapper around the legacy
+> `gps.default.so` that the blob set already ships) is the next change.
 
 ## Device
 
