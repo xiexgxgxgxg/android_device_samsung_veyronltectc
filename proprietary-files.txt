@@ -17,7 +17,6 @@ lib/hw/gatekeeper.mdfpp.so|de91caef9e7428de2cf0e00fe7f7e935716e9b4f
 lib/hw/gps.default.so|b8d3054456c0b1b2cf393f5ec684e6f701c27285
 lib/hw/gralloc.default.so|1a3c2258d71b49a141486126f9f8bd8a863c262f
 lib/hw/gralloc.msm8996.so|fc70a5116a148a1e527c121785d92aa99563f84c
-lib/hw/hwcomposer.msm8996.so|b26b466a874ec2ac8ad5ea29c972b47cb7f90c41
 lib/hw/keystore.default.so|836d9bf0e3ef116317c797d8bad5cf6539f153af
 lib/hw/keystore.mdfpp.so|e2b3cbc37fead2757b9aa4377b13d6bdec5d0c8a
 lib/hw/lights.msm8996.so|aeafa1224c96cfda874b3555315797cfa2eecda8
@@ -79,7 +78,6 @@ lib64/hw/gatekeeper.mdfpp.so|a5cf48c16cf65fd1d0324bb09a4792581f300261
 lib64/hw/gps.default.so|ed3b087ca83f6ce32f1fee866d2e0a0b4aea7b8d
 lib64/hw/gralloc.default.so|45b1a55f31d79931a714d2a8464f6c7f954776f1
 lib64/hw/gralloc.msm8996.so|4a9f1d16437631c6a208bd9a820b5bdd49007088
-lib64/hw/hwcomposer.msm8996.so|47fd00558b8cf5aef7a7ad173ad20d8ff42e617c
 lib64/hw/keystore.default.so|d9bd113d321e1d735d547135e1a5b39f5dd0a4be
 lib64/hw/keystore.mdfpp.so|8c6e5e7e7194cfd1a59d010f9f378e8410384c91
 lib64/hw/lights.msm8996.so|aa82e4469575898d494c08256386aade9e99a213
@@ -817,10 +815,8 @@ vendor/lib64/librs_adreno.so|6ada334ba40016a41db23ff529a7b2a4ada28130
 vendor/lib64/librs_adreno_sha1.so|5ecdb29cb7b72d19cb2341c9620a589c358fdd96
 vendor/lib64/libscalar.so|03de4df34c4cd3059b8177bbfe5c3879566a09af
 vendor/lib64/libsd_sdk_display.so|8935c20c599aa2ab2b2921b88f4e391b7e84e33a
-vendor/lib64/libsdm-color.so|1fa8d2f53987279ee1dfb439d3acc18692a97963
 vendor/lib64/libsdm-diag.so|d7b057873a28752596d7855e2202ef55d3ac09d1
 vendor/lib64/libsdm-disp-apis.so|1bb6ae43446256095582a35ae42586113bd14d5d
-vendor/lib64/libsdmextension.so|097ed479f6639248f8b8ee27e97fb26de9c498b3
 vendor/lib64/libsecureui.so|f13a8e6d1d5f912ab4637c057fa4f5425ec8564e
 vendor/lib64/libsecureui_svcsock.so|714a0fe96b19652fe276a427e963bc2b225d629f
 vendor/lib64/libsecureuisvc_jni.so|798e6366e1b4eec492dbaa7b3b5d560146c139a7
