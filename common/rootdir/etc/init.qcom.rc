@@ -225,6 +225,8 @@ on boot
 
 # msm specific files that need to be created on /data
 on post-fs-data
+    # 6.0.1 mm-qcamera-daemon binds /data/misc/camera/cam_socket*
+    mkdir /data/misc/camera 0770 camera camera
     mkdir /data/vendor/misc 01771 system system
 
     # Create directory used for dump collection
