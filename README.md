@@ -66,8 +66,8 @@ Nothing has been booted yet.
 - [x] Vendor blobs: extracted from `W2017KEU1ARG1` (870 files) into
       `android_vendor_samsung_veyronltectc`
 - [x] Kernel: build `veyronlte_ctc_defconfig` out-of-tree for LineageOS
-      (configfs, quota, memcg and the Android 11 userspace bits are still
-      pending; the tree builds and boots TWRP today)
+- [x] Kernel: Android 11 userspace options (USB configfs, binder
+      hwbinder/vndbinder, quota, memcg, F2FS, overlayfs)
 - [x] Verify partition layout / fstab against the real partition table
 - [ ] Keypad: `keylayout` / `keychars` from stock
 - [ ] Dual panel: verify Android behaves when the panel switches under it
@@ -78,6 +78,21 @@ Nothing has been booted yet.
 - [ ] Wi-Fi firmware: `bcmdhd_*.bin` and `nvram_net.txt` are not in the blob set
       yet
 - [x] `BUILD_FINGERPRINT` set from the stock ARG1 build.prop
+
+## Debugging a boot loop
+
+Two independent channels survive a reset, so a ROM that never reaches the
+launcher can still be diagnosed:
+
+* **Kernel log:** `CONFIG_VEYRON_SDLOG` writes the dmesg tail to a raw area at
+  the end of the microSD card every 300 ms, from early boot. Insert a card
+  before flashing; decode the region with `/data/twrp/w2_audit/sdlog_decode.py`.
+* **Userspace log:** `persist.logd.logpersistd=logcatd` keeps logcat in
+  `/data/misc/logd/`. From TWRP, mount `/data` and
+  `adb pull /data/misc/logd/`.
+
+The recovery partition still holds TWRP, so a bad `boot.img` is restored from
+TWRP without the Odin reader image.
 
 ## Local manifest
 
