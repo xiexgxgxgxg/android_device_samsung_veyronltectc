@@ -113,3 +113,13 @@ wifi.interface=wlan0
 # WFD
 persist.debug.wfd.enable=1
 persist.sys.wfd.virtual=0
+
+# Debugging
+# Keep a persistent logcat on /data/misc/logd so a boot loop can be diagnosed
+# from TWRP (mount /data, pull /data/misc/logd).  The kernel side is covered by
+# VEYRON_SDLOG, which writes dmesg to the SD card and survives a reset.
+persist.logd.logpersistd=logcatd
+persist.logd.logpersistd.buffer=all
+persist.logd.logpersistd.rotate_kbytes=4096
+persist.logd.logpersistd.count=8
+persist.logd.size=4194304
