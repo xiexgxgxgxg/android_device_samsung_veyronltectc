@@ -77,3 +77,33 @@ the correct behaviour for a pre-8.0 HAL.
 
 Apply:
     (cd hardware/interfaces && git apply ../../device/samsung/veyronltectc/patches/0003-audio-legacy-hal-metadata.patch)
+
+## 0004-fingerprint-32bit-service.patch
+
+`hardware/interfaces/biometrics/fingerprint/2.1/default`: the W2017's real
+fingerprint HAL is the stock 32-bit Egis `fingerprint.default.so`; the
+64-bit HAL in the vendor tree is a demo that returns
+`FINGERPRINT_ERROR_UNABLE_TO_PROCESS` from enumerate.  Build the AOSP 2.1
+wrapper 32-bit (`compile_multilib: "32"`) and accept the stock HAL's
+fingerprint API 2.0 (512) in addition to 2.1 (513), otherwise `openHal`
+logs:
+
+    E/...fingerprint@2.1-service: Wrong fp version. Expected 513, got 512
+    E/...fingerprint@2.1-service: Can't open HAL module
+
+The 32-bit deps (`libbauthserver`, `libbauthtzcommon`,
+`libegis_fp_normal_sensor_test`, `libsynaFpSensorTestNwd`, `libMcRegistry`,
+`libstdc++`) must be installed from the stock AP into `/vendor/lib`.
+
+As of this writing the service registers the HIDL interface and reaches the
+HAL, but the Samsung bauth layer still fails:
+
+    E/bauth_FPDLBAuthSensorControl: BAuthDeviceOpen sys call failed rv : 209
+    E/bauth_FPBAuthService: Sensor Device Open Fail
+    E/bauth_TLC_Communicator: Trustlet Session is not opened
+
+so the kernel bauth/TEE driver/trustlet is the remaining blocker; the
+service/version part is ready.
+
+Apply:
+    (cd hardware/interfaces && git apply ../../device/samsung/veyronltectc/patches/0004-fingerprint-32bit-service.patch)

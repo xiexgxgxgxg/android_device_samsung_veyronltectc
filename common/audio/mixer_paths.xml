@@ -2160,4 +2160,22 @@
     <path name="voice-tx">
     </path>
 
+    <!-- W2017 native (SLIMBUS/RX7/RX8/COMP0) combined playback path.
+         The A11 audio policy asks the HAL for "low-latency-playback
+         speaker"; the stock file only has the two separate paths, so the
+         HAL could not apply the native route.  This path is used when the
+         device tree installs mixer_paths.xml as /system/etc/mixer_paths.xml
+         instead of the S7 tasha file. -->
+    <path name="low-latency-playback speaker">
+        <path name="low-latency-playback" />
+        <path name="speaker" />
+        <ctl name="Speaker ZCD" value="On" />
+        <ctl name="Speaker Ramp" value="On" />
+    </path>
+
+    <!-- The W2017 has no S7 speaker VI-feedback loop; keep the path name
+         (the HAL enables that sound device) but do not start the TX. -->
+    <path name="spkr-vi-feedback">
+    </path>
+
 </mixer>
