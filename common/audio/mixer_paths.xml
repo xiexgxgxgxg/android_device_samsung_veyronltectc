@@ -1,6 +1,12 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
 <mixer>
     <!-- These are the initial mixer settings -->
+    <!-- Keep the MAX98506 soft ramp/zero-cross enabled when
+         disable_audio_route() resets the mixer at stream stop.  Otherwise
+         the reset writes Speaker Ramp=Off while the amp is still powered,
+         which is audible as a pop after playback. -->
+    <ctl name="Speaker Ramp" value="On" />
+    <ctl name="Speaker ZCD" value="On" />
     <ctl name="Voice Rx Device Mute" id="0" value="0" />
     <ctl name="Voice Rx Device Mute" id="1" value="-1" />
     <ctl name="Voice Rx Device Mute" id="2" value="20" />
@@ -1452,6 +1458,11 @@
         <ctl name="RX7 Digital Volume" value="84" />
         <ctl name="RX8 Digital Volume" value="84" />
         <ctl name="COMP0 Switch" value="1" />
+        <!-- Put the amp ramp/ZCD in the referenced speaker path itself;
+             some audio_route versions skip sibling ctl elements after a
+             <path> reference. -->
+        <ctl name="Speaker Ramp" value="On" />
+        <ctl name="Speaker ZCD" value="On" />
     </path>
 
     <path name="speaker-fluid">
