@@ -1,0 +1,16 @@
+diff --git a/server/netd.rc b/server/netd.rc
+index e6316c12..b114659d 100644
+--- a/server/netd.rc
++++ b/server/netd.rc
+@@ -1,6 +1,10 @@
+ service netd /system/bin/netd
+     class main
+-    capabilities CHOWN DAC_OVERRIDE DAC_READ_SEARCH FOWNER IPC_LOCK KILL NET_ADMIN NET_BIND_SERVICE NET_RAW SETUID SETGID
++    # 3.18 has no ambient capabilities: the "capabilities" line makes init
++    # clear the whole set (CapEff=0), so netd's netlink socket() calls fail
++    # with EACCES and WiFi cannot set its IPv4 address.  Run as root without
++    # the capabilities line so the full set is inherited.
++    user root
+     socket dnsproxyd stream 0660 root inet
+     socket mdns stream 0660 root system
+     socket fwmarkd stream 0660 root inet
