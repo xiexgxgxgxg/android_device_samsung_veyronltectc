@@ -30,3 +30,26 @@ and Bluetooth reaches state ON with address FC:42:03:F1:33:08.
 
 Apply:
     (cd hardware/interfaces && git apply ../../device/samsung/veyronltectc/patches/0001-hal-services-run-as-root-on-3.18.patch)
+
+## 0002-netd-run-as-root-on-3.18.patch
+
+`system/netd`: same 3.18 ambient-capability problem, but netd is the one that
+actually configures the WiFi interface.  Its rc declared
+
+    capabilities CHOWN DAC_OVERRIDE ... NET_ADMIN NET_RAW ...
+
+so init ended up with `CapEff: 0000000000000000` / `CapBnd: 0` even though
+netd runs as uid 0.  The visible failure is:
+
+    E WifiNative: Unable to get interface config
+    E WifiNative: java.lang.IllegalStateException:
+        android.os.ServiceSpecificException: [Permission denied] : socket() failed (code 13)
+    E IpClient.wlan0: ERROR Setting IPv4 address to 10.x.x.x/24 failed:
+        android.os.ServiceSpecificException: [Permission denied] : socket() failed (code 13)
+
+Association, the 4-way handshake and DHCP all succeed; only the netd netlink
+operations fail, so the connection is torn down immediately.  Fix is the same
+as 0001: run as root and remove the `capabilities` line.
+
+Apply:
+    (cd system/netd && git apply ../../device/samsung/veyronltectc/patches/0002-netd-run-as-root-on-3.18.patch)
