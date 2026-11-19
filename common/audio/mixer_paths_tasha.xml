@@ -623,6 +623,15 @@
 
     <path name="low-latency-playback speaker">
         <ctl name="PRI_MI2S_RX Audio Mixer MultiMedia5" value="1" />
+        <!-- The HAL applies the usecase path directly; the separate
+             spk-mono/speaker path is not applied for this stream.  Put the
+             W2017 MAX98506 start-up controls here so the amp gets a proper
+             sample rate, mono mode, soft ramp and zero-cross detection
+             before the first PCM samples. -->
+        <ctl name="PRI_MI2S SampleRate" value="KHZ_48" />
+        <ctl name="One Stop Mode" value="Mono Left" />
+        <ctl name="Speaker ZCD" value="On" />
+        <ctl name="Speaker Ramp" value="On" />
     </path>
 
     <path name="low-latency-playback speaker-44.1">
@@ -1756,8 +1765,11 @@
         <ctl name="SLIM0_RX_VI_FB_LCH_MUX"  value="SLIM4_TX" />
     </path>
 
+    <!-- The W2017 does not have the S7's speaker VI-feedback loop.  Keep
+         the path (the HAL asks for it when enabling the speaker) but do not
+         start the PRI_MI2S_TX feedback route: on this board it adds a
+         transient at the start of every speaker stream. -->
     <path name="spkr-vi-feedback">
-        <ctl name="MultiMedia2 Mixer PRI_MI2S_TX" value="1" />
     </path>
 
     <path name="remote-bt-ble">
@@ -1778,6 +1790,9 @@
     <path name="spk-mono">
         <ctl name="PRI_MI2S SampleRate" value="KHZ_48" />
         <ctl name="One Stop Mode" value="Mono Left" />
+        <!-- MAX98506 pop suppression: zero-cross detection + soft ramp. -->
+        <ctl name="Speaker ZCD" value="On" />
+        <ctl name="Speaker Ramp" value="On" />
     </path>
 
     <path name="spk-mono-44.1">
