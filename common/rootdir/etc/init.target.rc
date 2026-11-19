@@ -292,12 +292,27 @@ service qseecomd /vendor/bin/qseecomd
 #
 service thermal-engine /vendor/bin/thermal-engine
    class main
+   # Do not let init start this with the other main-class services.  When
+   # thermal-engine starts that early it loses a race with the thermal
+   # zones/config and then busy-loops at ~100% CPU for the whole uptime.
+   # Restarting the very same binary after boot makes it idle, so start it
+   # from the boot_completed action below instead.  Explicit "start
+   # thermal-engine" from the charger action still works.
+   disabled
    user root
    socket thermal-send-client stream 0666 system system
    socket thermal-recv-client stream 0660 system system
    socket thermal-recv-passive-client stream 0666 system system
    socket thermal-send-rule stream 0660 system system
    group root
+
+# thermal-engine is disabled above and started here, after the system has
+# finished booting and all thermal zones/sensors are present.  Starting it
+# here is the equivalent of the post-boot "restart thermal-engine" that has
+# been verified to keep it at 0% CPU; starting it with class main made it
+# busy-loop at ~100% CPU.
+on property:sys.boot_completed=1
+    start thermal-engine
 
 #service security-check1 /sbin/security_boot_check system
 #    class core
