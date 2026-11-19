@@ -53,3 +53,27 @@ as 0001: run as root and remove the `capabilities` line.
 
 Apply:
     (cd system/netd && git apply ../../device/samsung/veyronltectc/patches/0002-netd-run-as-root-on-3.18.patch)
+
+## 0003-audio-legacy-hal-metadata.patch
+
+`hardware/interfaces/audio/core/all-versions/default`: after the W2017 stock
+`mixer_paths.xml` was restored, the 6.0.1 `audio.primary.msm8996.so` opened
+successfully, but `android.hardware.audio.service` immediately crashed:
+
+    Fatal signal 11 (SIGSEGV), fault addr 0xbb80
+    #01 ... StreamOut::updateSourceMetadata(...)+222
+    #02 ... Device::openOutputStream(...)
+    #03 ... PrimaryDevice::openOutputStream(...)
+
+`update_source_metadata` (and `update_sink_metadata`) were added to
+`audio_stream_out` / `audio_stream_in` in AUDIO_DEVICE_API_VERSION_3_0
+(Android 8.0).  The 6.0.1 HAL's structs end before those fields, so even the
+`mStream->update_source_metadata == nullptr` check reads past the struct and
+sometimes calls a garbage pointer (0xbb80 = 48000, a sample rate value).
+
+Guard both calls with `mDevice->version() >= AUDIO_DEVICE_API_VERSION_3_0`
+before touching the metadata fields.  Old HALs simply skip metadata, which is
+the correct behaviour for a pre-8.0 HAL.
+
+Apply:
+    (cd hardware/interfaces && git apply ../../device/samsung/veyronltectc/patches/0003-audio-legacy-hal-metadata.patch)

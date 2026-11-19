@@ -22,7 +22,9 @@
 #ifndef _BDROID_BUILDCFG_H
 #define _BDROID_BUILDCFG_H
 
-#define BTM_DEF_LOCAL_NAME   "Samsung Galaxy S7"
+/* This tree was started from the S7 device config; keep the W2017 model
+ * name so the adapter does not advertise itself as a Galaxy S7. */
+#define BTM_DEF_LOCAL_NAME   "SM-W2017"
 
 #define BTA_DISABLE_DELAY 1000 /* in milliseconds */
 
