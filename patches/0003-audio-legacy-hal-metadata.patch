@@ -1,0 +1,59 @@
+diff --git a/audio/core/all-versions/default/StreamIn.cpp b/audio/core/all-versions/default/StreamIn.cpp
+index d38e225c0..3b36656af 100644
+--- a/audio/core/all-versions/default/StreamIn.cpp
++++ b/audio/core/all-versions/default/StreamIn.cpp
+@@ -453,6 +453,12 @@ Return<void> StreamIn::debug(const hidl_handle& fd, const hidl_vec<hidl_string>&
+ 
+ #if MAJOR_VERSION >= 4
+ Return<void> StreamIn::updateSinkMetadata(const SinkMetadata& sinkMetadata) {
++    // update_sink_metadata was added in AUDIO_DEVICE_API_VERSION_3_0
++    // (Android 8.0); a pre-3.0 audio_stream_in has no such field, so do not
++    // read it at all for the legacy 6.0.1 HAL.
++    if (mDevice->version() < AUDIO_DEVICE_API_VERSION_3_0) {
++        return Void();  // legacy HAL has no metadata support
++    }
+     if (mStream->update_sink_metadata == nullptr) {
+         return Void();  // not supported by the HAL
+     }
+diff --git a/audio/core/all-versions/default/StreamOut.cpp b/audio/core/all-versions/default/StreamOut.cpp
+index af3307aaa..5f79f9aec 100644
+--- a/audio/core/all-versions/default/StreamOut.cpp
++++ b/audio/core/all-versions/default/StreamOut.cpp
+@@ -562,6 +562,14 @@ Return<void> StreamOut::debug(const hidl_handle& fd, const hidl_vec<hidl_string>
+ 
+ #if MAJOR_VERSION >= 4
+ Return<void> StreamOut::updateSourceMetadata(const SourceMetadata& sourceMetadata) {
++    // update_source_metadata was added to audio_stream_out in
++    // AUDIO_DEVICE_API_VERSION_3_0 (Android 8.0).  A pre-3.0 HAL's
++    // audio_stream_out ends before that field, so even reading the pointer
++    // runs off the end of the struct (the W2017 6.0.1 HAL crashes at
++    // 0xbb80).  Check the device API version before touching the field.
++    if (mDevice->version() < AUDIO_DEVICE_API_VERSION_3_0) {
++        return Void();  // legacy HAL has no metadata support
++    }
+     if (mStream->update_source_metadata == nullptr) {
+         return Void();  // not supported by the HAL
+     }
+diff --git a/audio/core/all-versions/default/include/core/default/Device.h b/audio/core/all-versions/default/include/core/default/Device.h
+index b0e72d960..ccf424ba4 100644
+--- a/audio/core/all-versions/default/include/core/default/Device.h
++++ b/audio/core/all-versions/default/include/core/default/Device.h
+@@ -130,6 +130,9 @@ struct Device : public IDevice, public ParametersUtil {
+     void closeInputStream(audio_stream_in_t* stream);
+     void closeOutputStream(audio_stream_out_t* stream);
+     audio_hw_device_t* device() const { return mDevice; }
++    // HAL API version (audio_hw_device_t::common.version).  StreamOut/StreamIn
++    // use it to avoid reading metadata fields that pre-3.0 HALs do not have.
++    uint32_t version() const { return mDevice->common.version; }
+ 
+   private:
+     bool mIsClosed;
+@@ -146,8 +149,6 @@ struct Device : public IDevice, public ParametersUtil {
+     // Methods from ParametersUtil.
+     char* halGetParameters(const char* keys) override;
+     int halSetParameters(const char* keysAndValues) override;
+-
+-    uint32_t version() const { return mDevice->common.version; }
+ };
+ 
+ }  // namespace implementation
