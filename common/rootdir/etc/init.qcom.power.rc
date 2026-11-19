@@ -41,6 +41,13 @@ on boot
     chown system system /dev/cpuset/camera-daemon/tasks
     chmod 0664 /dev/cpuset/camera-daemon/tasks
 
+    # The 6.0.1 thermal-engine daemon is not started on this Android 11
+    # port (it eventually busy-spins at ~100% CPU).  Use the kernel thermal
+    # monitor, which is configured by the msm-thermal device tree node, and
+    # the AOSP android.hardware.thermal HAL for reporting instead.
+    write /sys/module/msm_thermal/parameters/enabled 1
+    write /sys/module/msm_thermal/core_control/enabled 1
+
 on charger
     wait /dev/block/platform/soc/${ro.boot.bootdevice}
     symlink /dev/block/platform/soc/${ro.boot.bootdevice} /dev/block/bootdevice
@@ -96,10 +103,9 @@ on charger
     write /sys/devices/system/cpu/cpu1/cpufreq/scaling_setspeed 300000
     write /sys/devices/system/cpu/cpu2/online 0
     write /sys/devices/system/cpu/cpu3/online 0
-    write /sys/module/msm_thermal/parameters/enabled "N"
+    write /sys/module/msm_thermal/parameters/enabled "Y"
 
     class_start sec-charger
-    start thermal-engine
 
     setprop sys.usb.configfs 1
 
