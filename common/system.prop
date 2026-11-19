@@ -115,11 +115,13 @@ persist.debug.wfd.enable=1
 persist.sys.wfd.virtual=0
 
 # Debugging
-# ART's JIT code cache flush crashes on this 3.18 kernel (SEGV_ACCERR in
-# art::FlushCpuCaches) and kills zygote/system_server in a loop, so the
-# framework never comes up.  Disable the JIT for bring-up.
-dalvik.vm.usejit=false
-dalvik.vm.usejitprofiles=false
+# ART's JIT code cache flush crashes on this 3.18 kernel when the dual-view
+# (RX executable alias + RW writable alias) code cache is used: the
+# __clear_cache on the RX alias takes a permission fault and kills
+# zygote64.  ART is patched to use the single-view RWX code cache instead,
+# so JIT can stay enabled.
+dalvik.vm.usejit=true
+dalvik.vm.usejitprofiles=true
 # This 3.18 kernel has no PR_CAP_AMBIENT, so init drops the "capabilities"
 # line of logd.rc and logd cannot keep CAP_SYSLOG/CAP_AUDIT_CONTROL.  Start it
 # with the userspace sources only; the kernel buffer is read via dmesg/sdlog.
