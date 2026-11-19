@@ -1,0 +1,38 @@
+diff --git a/biometrics/fingerprint/2.1/default/Android.bp b/biometrics/fingerprint/2.1/default/Android.bp
+index ec4838bd9..00f3cfcac 100644
+--- a/biometrics/fingerprint/2.1/default/Android.bp
++++ b/biometrics/fingerprint/2.1/default/Android.bp
+@@ -1,6 +1,11 @@
+ cc_binary {
+     name: "android.hardware.biometrics.fingerprint@2.1-service",
+     defaults: ["hidl_defaults"],
++    // The W2017's real fingerprint HAL (fingerprint.default.so) is the
++    // stock 32-bit Egis HAL; the 64-bit HAL shipped in the vendor tree is a
++    // demo that returns FINGERPRINT_ERROR_UNABLE_TO_PROCESS from enumerate.
++    // Build the AOSP 2.1 wrapper as 32-bit so hw_get_module() loads it.
++    compile_multilib: "32",
+     init_rc: ["android.hardware.biometrics.fingerprint@2.1-service.rc"],
+     vintf_fragments: ["android.hardware.biometrics.fingerprint@2.1-service.xml"],
+     vendor: true,
+diff --git a/biometrics/fingerprint/2.1/default/BiometricsFingerprint.cpp b/biometrics/fingerprint/2.1/default/BiometricsFingerprint.cpp
+index f68795955..199526a2b 100644
+--- a/biometrics/fingerprint/2.1/default/BiometricsFingerprint.cpp
++++ b/biometrics/fingerprint/2.1/default/BiometricsFingerprint.cpp
+@@ -239,9 +239,15 @@ fingerprint_device_t* BiometricsFingerprint::openHal() {
+         return nullptr;
+     }
+ 
+-    if (kVersion != device->version) {
++    // The W2017's stock 32-bit fingerprint HAL (the real Egis HAL) reports
++    // HARDWARE_MODULE_API_VERSION(2,0) even though the AOSP 2.1 wrapper only
++    // needs the 2.0 struct fields for enumerate/open.  Accept both 2.0 and
++    // 2.1; the 2.1-only getAuthenticatorId is guarded by the HAL itself.
++    static const uint16_t kVersion2_0 = HARDWARE_MODULE_API_VERSION(2, 0);
++    if (kVersion != device->version && kVersion2_0 != device->version) {
+         // enforce version on new devices because of HIDL@2.1 translation layer
+-        ALOGE("Wrong fp version. Expected %d, got %d", kVersion, device->version);
++        ALOGE("Wrong fp version. Expected %d or %d, got %d",
++              kVersion, kVersion2_0, device->version);
+         return nullptr;
+     }
+ 
