@@ -458,3 +458,8 @@ PRODUCT_SYSTEM_DEFAULT_PROPERTIES += \
     ro.adb.secure=0 \
     ro.secure=0
 
+
+# system_ext apps such as Settings are not preopted into the system image.
+# Use speed for on-device dexopt so their first cold start is native code,
+# not the interpreter (see the JIT single-view workaround in art/).
+PRODUCT_DEX_PREOPT_DEFAULT_COMPILER_FILTER := speed
