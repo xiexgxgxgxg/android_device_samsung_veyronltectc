@@ -145,3 +145,21 @@ persist.logd.size=4194304
 
 # W2017: the panel is mounted 180 degrees (image would be upside down otherwise)
 ro.surface_flinger.primary_display_orientation=ORIENTATION_0
+
+# Storage: this kernel ships Samsung's old sdcardfs 3.2.0 (low_uid/low_gid/
+# multi_user/mask=%o), while Android 11's /system/bin/sdcard passes the newer
+# fsuid/fsgid/multiuser/mask=%d/derive_gid/default_normal/unshared_obb set.
+# The mount therefore fails with EINVAL, A11's vold then times out waiting for
+# sdcardfs and aborts the emulated volume, so /storage/emulated never gets
+# mounted and /data/media is never exposed to apps.
+#
+# A11 vold decides between sdcardfs and FUSE by reading
+# external_storage.sdcardfs.enabled (vold/Utils.cpp:IsSdcardfsUsed());
+# ro.sys.sdcardfs is only read by /system/bin/sdcard itself.  Use AOSP's
+# FUSE-only emulated volume instead: MediaProvider serves /data/media/0
+# directly through /dev/fuse, no sdcardfs lower mount is created, and there is
+# no sdcardfs/FUSE deadlock.  (LineageOS 18.1 on S7 / Xiaomi msm8996 uses
+# sdcardfs because their kernels carry the newer AOSP sdcardfs with the fsuid
+# option set; this 3.18 Samsung tree does not, and A11 fully supports
+# FUSE-only devices.)
+external_storage.sdcardfs.enabled=false
