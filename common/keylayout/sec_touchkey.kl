@@ -15,4 +15,8 @@
 #
 
 key 158 BACK         VIRTUAL
+# The outer-screen middle key reports KEY_HOMEPAGE (172).  Without this
+# mapping InputReader drops it, so HOME did nothing and the framework never
+# produced the haptic feedback.
+key 172 HOME         VIRTUAL
 key 254 APP_SWITCH   VIRTUAL
