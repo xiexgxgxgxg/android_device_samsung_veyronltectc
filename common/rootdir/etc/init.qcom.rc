@@ -1034,3 +1034,10 @@ service mm-qcamera-daemon /vendor/bin/mm-qcamera-daemon
     user camera
     group camera system inet input
     disabled
+
+# Samsung sensor hub daemon (SSC): the light/proximity sensors on this device
+# come from the sensor hub; the sensors HAL talks to it via this service.
+service sensorhubservice /vendor/bin/sensorhubservice
+    class late_start
+    user system
+    group system input
