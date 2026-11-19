@@ -135,4 +135,4 @@ persist.logd.logpersistd.count=8
 persist.logd.size=4194304
 
 # W2017: the panel is mounted 180 degrees (image would be upside down otherwise)
-ro.surface_flinger.primary_display_orientation=ORIENTATION_180
+ro.surface_flinger.primary_display_orientation=ORIENTATION_0
