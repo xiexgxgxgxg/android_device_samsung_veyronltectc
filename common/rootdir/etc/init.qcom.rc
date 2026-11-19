@@ -1032,7 +1032,13 @@ service sdmlogsd /system/bin/logcat -b all -v threadtime -f /mnt/sdcard/sdmlog.t
 service mm-qcamera-daemon /vendor/bin/mm-qcamera-daemon
     class late_start
     user camera
-    group camera system inet input
+    group camera system inet input graphics radio
+    # Android 6.0.1 blob: libmmcamera2_isp_modules.so destroys an ISP session
+    # mutex twice, which Android 11's bionic turns into abort() and kills the
+    # daemon on every camera close.  The shim makes the second destroy a no-op.
+    setenv LD_PRELOAD /vendor/lib/libmmcamera_mutex_shim.so
+    # Started explicitly from post-fs-data (init.veyronltectc.rc): cameraserver
+    # enumerates the cameras in class main, before late_start would run.
     disabled
 
 # Samsung sensor hub daemon (SSC): the light/proximity sensors on this device

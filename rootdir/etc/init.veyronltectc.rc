@@ -124,6 +124,14 @@ on boot
 #    group system
 #
 on post-fs-data
+# Vendor camera daemon (Android 6.0.1 mm-camera2 stack).  It is NOT started
+# here: at post-fs-data the msm camera drivers are still probing and the
+# daemon would read empty sensor names, while starting it later makes the
+# 6.0.1 camera HAL fail its static-metadata query and hang/abort
+# cameraserver.  Keep the service disabled for manual debugging:
+#   setprop ctl.start mm-qcamera-daemon
+    mkdir /data/misc/camera 0770 camera camera
+
 # permissions for audio
     chown system radio /sys/class/rt5508_cal/trigger
     chown system radio /sys/class/rt5508_cal/status

@@ -1,0 +1,6 @@
+cc_binary {
+    name: "qseecom_dualfp_test",
+    srcs: ["qseecom_dualfp_test.c"],
+    vendor: true,
+    shared_libs: ["libdl", "liblog", "libc"],
+}
