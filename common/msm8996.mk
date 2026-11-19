@@ -143,6 +143,7 @@ PRODUCT_PACKAGES += \
 
 PRODUCT_COPY_FILES += \
     $(LOCAL_PATH)/camera/msm8996_camera.xml:$(TARGET_COPY_OUT_VENDOR)/etc/firmware/msm8996_camera.xml \
+    $(LOCAL_PATH)/camera/msm8996_camera_veyron.xml:$(TARGET_COPY_OUT_VENDOR)/etc/firmware/msm8996_camera_veyron.xml \
     $(LOCAL_PATH)/camera/C12QL_s5k2l1sx_chromatix.xml:$(TARGET_COPY_OUT_VENDOR)/etc/firmware/C12QL_s5k2l1sx_chromatix.xml \
     $(LOCAL_PATH)/camera/C12QS_imx260_chromatix.xml:$(TARGET_COPY_OUT_VENDOR)/etc/firmware/C12QS_imx260_chromatix.xml \
     $(LOCAL_PATH)/camera/s5k4e6xx_cc_chromatix.xml:$(TARGET_COPY_OUT_VENDOR)/etc/firmware/s5k4e6xx_cc_chromatix.xml \
