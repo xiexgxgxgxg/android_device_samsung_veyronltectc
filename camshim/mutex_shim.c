@@ -20,3 +20,51 @@ int pthread_mutex_destroy(pthread_mutex_t *mutex)
 	(void)mutex;
 	return 0;
 }
+
+/*
+ * The Samsung 3A tuning libraries (libTsAe/libTsAwb/libTsAf and the
+ * C12Q*_libTs* variants) were built with GCC 4.9 and reference the old
+ * libsupc++ entry points.  Android 11's libstdc++.so no longer exports
+ * them, so dlopen(..., RTLD_NOW) fails with "cannot locate symbol" and
+ * mm-qcamera-daemon dereferences the NULL handle and dies on the front
+ * camera.  Provide the (essentially unreachable) entry points so the
+ * libraries can be loaded; an actual C++ exception from them is not
+ * supported and aborts instead of crashing inside the unwinder.
+ */
+#include <stdlib.h>
+#include <dlfcn.h>
+
+void *__cxa_begin_cleanup(void *exc)
+{
+	(void)exc;
+	return NULL;
+}
+
+void *__cxa_type_match(void *thrown, void *catch_type, _Bool is_ref,
+		void **matched)
+{
+	(void)thrown;
+	(void)catch_type;
+	(void)is_ref;
+	if (matched) {
+		*matched = NULL;
+	}
+	return NULL;
+}
+
+void __cxa_call_unexpected(void *exc)
+{
+	(void)exc;
+	abort();
+}
+
+void *__gnu_Unwind_Find_exidx(void *pc, int *count)
+{
+	(void)pc;
+	if (count) {
+		*count = 0;
+	}
+	return NULL;
+}
+
+
