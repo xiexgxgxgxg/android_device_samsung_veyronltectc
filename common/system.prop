@@ -122,6 +122,13 @@ persist.sys.wfd.virtual=0
 # so JIT can stay enabled.
 dalvik.vm.usejit=true
 dalvik.vm.usejitprofiles=true
+# The Settings app lives in system_ext and is not preopted into the system
+# image; on-device dexopt otherwise compiles it with the default (verify/
+# extract) filter, which makes the first cold start take seconds even with
+# the JIT on.  Prefer speed for on-device app dexopt (the manual
+# 'cmd package compile -m speed -f com.android.settings' does the same for
+# the currently installed copy).
+dalvik.vm.dex2oat-filter=speed
 # This 3.18 kernel has no PR_CAP_AMBIENT, so init drops the "capabilities"
 # line of logd.rc and logd cannot keep CAP_SYSLOG/CAP_AUDIT_CONTROL.  Start it
 # with the userspace sources only; the kernel buffer is read via dmesg/sdlog.
