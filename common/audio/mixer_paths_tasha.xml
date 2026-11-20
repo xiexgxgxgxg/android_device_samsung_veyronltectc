@@ -630,6 +630,9 @@
              before the first PCM samples. -->
         <ctl name="PRI_MI2S SampleRate" value="KHZ_48" />
         <ctl name="One Stop Mode" value="Mono Left" />
+        <ctl name="SPK out" value="Enable" />
+        <ctl name="Speaker Function" value="On" />
+        <ctl name="Speaker Gain" value="20" />
         <ctl name="Speaker ZCD" value="On" />
         <ctl name="Speaker Ramp" value="On" />
     </path>
@@ -1791,6 +1794,9 @@
         <ctl name="PRI_MI2S SampleRate" value="KHZ_48" />
         <ctl name="One Stop Mode" value="Mono Left" />
         <!-- MAX98506 pop suppression: zero-cross detection + soft ramp. -->
+        <ctl name="SPK out" value="Enable" />
+        <ctl name="Speaker Function" value="On" />
+        <ctl name="Speaker Gain" value="20" />
         <ctl name="Speaker ZCD" value="On" />
         <ctl name="Speaker Ramp" value="On" />
     </path>
