@@ -91,6 +91,21 @@ on early-boot
     chmod 0664 /mnt/vendor/persist/sensors/sensors_settings
 
 on boot
+    # Keep the Bluetooth HSUART clocked while the controller is idle.
+    #
+    # The stock driver powers the port down one second after the last HCI write
+    # (bluesleep tx timer) and the next command then depends on the
+    # host_wake/ext_wake handshake to bring it back.  When that handshake is
+    # late the command never reaches the controller and the Bluetooth stack
+    # aborts itself: 2 s without a response -> firmware dump request, 5 s later
+    # hci_timeout_abort() -> SIGABRT.  That is the "Bluetooth restarts the
+    # first time you pair after a boot, then works" behaviour.
+    #
+    # The kernel side (drivers/bluetooth/bluesleep.c, keep_hsuart_on) stops the
+    # explicit clock-off, and this runtime-PM vote stops the driver's own idle
+    # autosuspend.  Together the port stays clocked while Bluetooth is on; with
+    # the knob set to N the stock behaviour comes back.
+    write /sys/bus/platform/drivers/msm_serial_hs/75af000.uart/power/control on
     chown bluetooth bluetooth /sys/module/bluetooth_power/parameters/power
     chown bluetooth net_bt /sys/class/rfkill/rfkill0/type
     chown bluetooth net_bt /sys/class/rfkill/rfkill0/state
