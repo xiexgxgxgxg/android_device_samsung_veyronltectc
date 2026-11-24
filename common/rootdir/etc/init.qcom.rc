@@ -791,14 +791,18 @@ service vendor.atfwd /vendor/bin/ATFWD-daemon
     group system radio
     disabled
 
-service hostapd_fst /vendor/bin/hw/hostapd -dd -g /data/vendor/wifi/hostapd/global
-    interface android.hardware.wifi.hostapd@1.0::IHostapd default
-    class main
-    capabilities NET_ADMIN NET_RAW
-    user wifi
-    group wifi
-    disabled
-    oneshot
+# hostapd_fst: stock Samsung's WiGig "fast session transfer" hostapd instance.
+# It registers the same HIDL interface as the AOSP hostapd service
+# (android.hardware.wifi.hostapd@1.0::IHostapd/default), and because this file
+# is parsed before hostapd.android.rc, init hands the interface to *this*
+# service.  That left SoftAP running as "user wifi" with the capability set
+# cleared by this 3.18 kernel (no ambient capabilities), so hostapd could not
+# open its nl80211 socket:
+#   E/hostapd: nl80211: socket(PF_INET,SOCK_DGRAM) failed: Permission denied
+#   E/hostapd: Failed to initialize driver 'nl80211'
+#   E/SoftApManager: Soft AP start failed   (hotspot switches itself off)
+# There is no WiGig hardware on this board, so drop the instance and let the
+# AOSP hostapd service (hostapd.android.rc, runs as root) own the interface.
 
 service vendor.wigig_hostapd /vendor/bin/hw/hostapd -dd  -j wigighostapd /data/vendor/wifi/hostapd/wigig_hostapd.conf
     class late_start
