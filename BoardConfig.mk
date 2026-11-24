@@ -38,8 +38,16 @@ TARGET_KERNEL_CONFIG := veyronlte_ctc_defconfig
 TARGET_VENDOR_PROP += $(DEVICE_PATH)/vendor.prop
 
 # RIL
-BOARD_PROVIDES_LIBRIL := true
-ENABLE_VENDOR_RIL_SERVICE := true
+#
+# The stock 6.0.1 vendor RIL (libsec-ril.so) only implements the legacy
+# RIL_RadioFunctions API, so rild has to be built from AOSP's hardware/ril:
+# A11's libril carries the IRadio HIDL service (libril/ril_service.cpp) that
+# the framework talks to, and it loads the vendor library through
+# rild.libpath.  Do not set BOARD_PROVIDES_LIBRIL (it would skip building the
+# AOSP libril) or ENABLE_VENDOR_RIL_SERVICE (it would skip rild and leave the
+# device without any radio stack, which is what happened before).
+#BOARD_PROVIDES_LIBRIL := true
+#ENABLE_VENDOR_RIL_SERVICE := true
 
 # inherit from the proprietary version
 include vendor/samsung/veyronltectc/BoardConfigVendor.mk
