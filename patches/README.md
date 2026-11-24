@@ -184,3 +184,22 @@ Verified: `cmd wifi start-softap ...` -> `Soft AP started successfully`,
 
 Apply:
     (cd external/wpa_supplicant_8 && patch -p1 < ../../device/samsung/veyronltectc/patches/0006-hostapd-run-as-root-on-3.18.patch)
+
+## 0007-telephony-probe-radio-hal-without-blocking.patch
+
+`frameworks/opt/telephony`: RILJ probes the radio HAL from 1.5 down to 1.0 with
+`IRadio.getService(name, retry=true)`.  A missing HIDL interface with
+retry=true never returns, so on this device - whose vendor RIL provides only
+1.0/1.1 through AOSP's libril - `com.android.phone` blocked forever in the 1.2
+probe.  The whole telephony stack was dead: no baseband version, no SIM state,
+no RIL requests reaching the modem (`logcat` showed `Waited one second for
+android.hardware.radio@1.2::IRadio/slot1` on repeat).
+
+The patch flips the six probes to `retry=false` so the chain falls through to
+the version that is actually registered.  After it, RILJ connects to 1.1 and
+`gsm.version.baseband` reports the vendor RIL's answer (`W2017KEU1ARG1`).
+
+Apply from `frameworks/opt/telephony`:
+
+    git apply -p1 <device>/patches/0007-telephony-probe-radio-hal-without-blocking.patch
+
