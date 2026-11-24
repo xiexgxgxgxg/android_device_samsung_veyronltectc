@@ -1,0 +1,38 @@
+--- a/transport/ServiceManagement.cpp
++++ b/transport/ServiceManagement.cpp
+@@ -759,13 +759,28 @@
+     const bool vintfLegacy = (transport == Transport::EMPTY) && allowLegacy;
+ 
+     if (!kEnforceVintfManifest) {
+-        ALOGE("getService: Potential race detected. The VINTF manifest is not being enforced. If "
+-              "a HAL server has a delay in starting and it is not in the manifest, it will not be "
+-              "retrieved. Please make sure all HALs on this device are in the VINTF manifest and "
+-              "enable PRODUCT_ENFORCE_VINTF_MANIFEST on this device (this is also enabled by "
+-              "PRODUCT_FULL_TREBLE). PRODUCT_ENFORCE_VINTF_MANIFEST will ensure that no race "
+-              "condition is possible here.");
+-        sleep(1);
++        // This device cannot enforce its manifest: it is a Treble port on top
++        // of stock 6.0.1 vendor blobs, and a large part of the registered HALs
++        // are not declared (wifi, supplicant, drm clearkey, codec2, display
++        // config, ...).  Enabling enforcement would make them unreachable.
++        //
++        // Upstream compensates for the race between a HAL starting up and a
++        // client looking it up by sleeping a full second in *every*
++        // getService() call.  That sleep is paid by any path resolving several
++        // HALs - media playback, ringtone preview, codec setup, display
++        // buffers - and dominates their latency.  The retry loop below already
++        // waits for a lazily started HAL to register (Waiter), so all the
++        // sleep does is cost time.  Keep the warning (logged once), drop the
++        // sleep.
++        static std::once_flag vintf_warning;
++        std::call_once(vintf_warning, [] {
++            ALOGE("getService: Potential race detected. The VINTF manifest is not being enforced. If "
++                  "a HAL server has a delay in starting and it is not in the manifest, it will not be "
++                  "retrieved. Please make sure all HALs on this device are in the VINTF manifest and "
++                  "enable PRODUCT_ENFORCE_VINTF_MANIFEST on this device (this is also enabled by "
++                  "PRODUCT_FULL_TREBLE). PRODUCT_ENFORCE_VINTF_MANIFEST will ensure that no race "
++                  "condition is possible here.");
++        });
+     }
+ 
+     for (int tries = 0; !getStub && (vintfHwbinder || vintfLegacy); tries++) {

@@ -1,0 +1,19 @@
+diff --git a/hostapd/hostapd.android.rc b/hostapd/hostapd.android.rc
+index 512ca0d7..372b6b16 100644
+--- a/hostapd/hostapd.android.rc
++++ b/hostapd/hostapd.android.rc
+@@ -16,8 +16,12 @@ service hostapd /vendor/bin/hw/hostapd
+     interface android.hardware.wifi.hostapd@1.1::IHostapd default
+     interface android.hardware.wifi.hostapd@1.2::IHostapd default
+     class main
+-    capabilities NET_ADMIN NET_RAW
+-    user wifi
++    # This 3.18 kernel has no ambient capabilities: init clears the whole
++    # capability set for a service that declares `capabilities`, so hostapd
++    # ended up as uid wifi with none and failed to open the nl80211 socket:
++    #   E/hostapd: nl80211: socket(PF_INET,SOCK_DGRAM) failed: Permission denied
++    #   E/hostapd: Failed to initialize driver 'nl80211'
++    user root
+     group wifi net_raw net_admin
+     disabled
+     oneshot

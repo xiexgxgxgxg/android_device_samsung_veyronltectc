@@ -107,3 +107,80 @@ service/version part is ready.
 
 Apply:
     (cd hardware/interfaces && git apply ../../device/samsung/veyronltectc/patches/0004-fingerprint-32bit-service.patch)
+
+## 0005-libhidlbase-drop-getservice-sleep.patch
+
+`system/libhidl`: `getRawServiceInternal()` does
+
+    if (!kEnforceVintfManifest) {
+        ALOGE("getService: Potential race detected. ...");
+        sleep(1);
+    }
+
+before it even asks hwservicemanager, so **every** HIDL `getService()` on a
+device that does not enforce its VINTF manifest costs a full second.  This
+port cannot enforce it: it runs on stock 6.0.1 vendor blobs and 51 of the 78
+registered HAL interfaces are not declared (wifi, supplicant, drm/clearkey,
+codec2 / `media.swcodec`, display config/color, cas, health, ...).  Turning
+enforcement on would make all of them unreachable.
+
+The sleep is supposed to cover the race where a HAL has not registered yet,
+but the retry loop right below already waits for that notification
+(`Waiter`), so it only costs time.  Drop the sleep, keep the warning once
+(`std::call_once`).
+
+This is the root cause of the "delayed playback" that was reported for the
+ringtone preview.  A single preview resolves 5 HALs:
+
+    NuPlayerDriver created -> GenericSource: FileSource   2.02 s (2 HALs)
+    Ringtone: Successfully created local player          +0.02 s
+    OMXClient: IOmx service obtained                      1.00 s
+    codec setup (IOmxStore + codec2)                      +2.4 s
+    ------------------------------------------------------------------
+    tap -> audible preview                                ~5.4 s
+
+After the patch the same path measures 26 ms from "NuPlayerDriver created"
+to "Successfully created local player" and 12 ms to "IOmx obtained", i.e.
+the preview starts in well under 150 ms.  It also removes the same penalty
+from the display, power and radio HAL lookups (the radio HAL is declared but
+never registers, so `getService` used to block 1 s per poll).
+
+Apply:
+    (cd system/libhidl && patch -p1 < ../../device/samsung/veyronltectc/patches/0005-libhidlbase-drop-getservice-sleep.patch)
+
+The patch is kept relative to the `system/libhidl` project root
+(`a/transport/ServiceManagement.cpp`), because that is the repository that
+owns the file.
+
+## 0006-hostapd-run-as-root-on-3.18.patch
+
+`external/wpa_supplicant_8`: the same 3.18 ambient-capability problem as
+0001/0002, but for the SoftAP.  `hostapd.android.rc` declared
+
+    capabilities NET_ADMIN NET_RAW
+    user wifi
+
+so hostapd ran as uid wifi with the capability set cleared and could not open
+its nl80211 socket:
+
+    E/hostapd: nl80211: socket(PF_INET,SOCK_DGRAM) failed: Permission denied
+    E/hostapd: Failed to initialize driver 'nl80211'
+    E/hostapd: Enabling interface wlan0 failed
+    E/HostapdHal: IHostapd.addAccessPoint failed: 1
+    E/SoftApManager: Soft AP start failed        -> the hotspot switches off
+
+Run it as root and drop the `capabilities` line; hostapd itself calls
+`capset()` and drops to uid wifi afterwards (`src/utils/os_unix.c`), so the
+privileges are only held while it opens the sockets.
+
+A second, device-side half of the same bug is fixed in
+`common/rootdir/etc/init.qcom.rc`: the stock `hostapd_fst` service used to
+claim `android.hardware.wifi.hostapd@1.0::IHostapd/default` before this rc was
+parsed, so the AOSP hostapd service was never started at all.
+
+Verified: `cmd wifi start-softap ...` -> `Soft AP started successfully`,
+`dumpsys wifi` -> `SUCCESS: 1`, `numSetupSoftApInterfaceFailureDueToHostapd=0`,
+`iw dev` -> `wlan0 type AP`.
+
+Apply:
+    (cd external/wpa_supplicant_8 && patch -p1 < ../../device/samsung/veyronltectc/patches/0006-hostapd-run-as-root-on-3.18.patch)
