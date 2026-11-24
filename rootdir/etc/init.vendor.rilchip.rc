@@ -4,18 +4,39 @@
 # This is a common source of Android security bugs.
 #
 
+# The vendor RIL library (libsec-ril.so) only implements the legacy
+# RIL_RadioFunctions API; AOSP's libril carries the IRadio HIDL service and
+# loads it through this -l argument.  This 3.18 kernel has no ambient
+# capabilities: init clears the whole capability set of a service that
+# declares `capabilities`, so rild has to run as root without that line (with
+# it, rild started as uid radio with no capabilities and exited immediately).
 service ril-daemon /vendor/bin/hw/rild -l "/vendor/lib64/libsec-ril.so"
+    # main: the framework connects to the radio HAL while it boots, so the
+    # daemon has to be up early; it retries its QMI setup until the modem link
+    # (opened by netmgrd) is ready.
     class main
-    user radio
-    group radio cache inet misc audio log oem_2901 system drmrpc vpn readproc wakelock
-    capabilities BLOCK_SUSPEND NET_ADMIN NET_RAW SYS_ADMIN CHOWN SYS_TIME
+    user root
+    seclabel u:r:radio:s0
+    # The stock 6.0.1 vendor RIL library needs two things A11 no longer ships:
+    # strdup8to16()/strdup16to8() from the old libutils (see
+    # rildshim/ril_compat_shim.cpp) and the 2.x protobuf (Message::SpaceUsed).
+    # Preload them so the vendor library binds to these instead of the A11
+    # system libraries, without touching libutils/protobuf for the rest of
+    # the system.
+    setenv LD_PRELOAD /vendor/lib64/libril_compat_shim.so:/vendor/lib64/libprotobuf-cpp-full.so
+    group radio cache inet misc audio log system drmrpc vpn readproc wakelock
     socket sap_uim_socket1 stream 660 bluetooth bluetooth
 
+# Second RIL instance: this board is dual SIM (the stock ROM ran the RIL in
+# dsds mode with a second instance for slot 2).  It needs exactly the same
+# environment as slot 1 above - root without a capabilities line, an explicit
+# seclabel and the compatibility shim preloaded.
 service ril-daemon1 /vendor/bin/hw/rild -c 2 -l "/vendor/lib64/libsec-ril.so"
     class main
-    user radio
-    group radio cache inet misc audio log oem_2901 system drmrpc vpn readproc wakelock
-    capabilities BLOCK_SUSPEND NET_ADMIN NET_RAW SYS_ADMIN CHOWN SYS_TIME
+    user root
+    seclabel u:r:radio:s0
+    setenv LD_PRELOAD /vendor/lib64/libril_compat_shim.so:/vendor/lib64/libprotobuf-cpp-full.so
+    group radio cache inet misc audio log system drmrpc vpn readproc wakelock
 
 # QMUX must be in multiple groups to support external process connections
 service vendor.qmuxd /vendor/bin/qmuxd
@@ -28,21 +49,3 @@ service irsc_util_oem /vendor/bin/irsc_util "/vendor/etc/sec_config_oem"
     user root
     oneshot
 
-# Avoid running ril-daemon2/3 service on qualcomm model
-on property:init.svc.ril-daemon2=running
-    stop ril-daemon2
-
-on property:init.svc.ril-daemon3=running
-    stop ril-daemon3
-
-on property:init.svc.vendor.ril-daemon=running
-    stop vendor.ril-daemon
-
-on property:init.svc.vendor.ril-daemon2=running
-    stop vendor.ril-daemon2
-
-on property:init.svc.vendor.ril-daemon3=running
-    stop vendor.ril-daemon3
-
-on property:init.svc.vendor.netmgrd=running && property:ro.vendor.use_data_netmgrd=false
-    stop vendor.netmgrd

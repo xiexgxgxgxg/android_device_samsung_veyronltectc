@@ -163,3 +163,8 @@ ro.surface_flinger.primary_display_orientation=ORIENTATION_0
 # option set; this 3.18 Samsung tree does not, and A11 fully supports
 # FUSE-only devices.)
 external_storage.sdcardfs.enabled=false
+
+# Stock ROM runs the RIL in dual-SIM mode (rild.libpath2 plus a second rild
+# instance for slot 2 in init.rilchip.rc); without this the framework brings up
+# a single phone and slot 2 is never probed.
+persist.radio.multisim.config=dsds
