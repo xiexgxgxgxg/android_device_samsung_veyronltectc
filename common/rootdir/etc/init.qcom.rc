@@ -106,6 +106,16 @@ on boot
     # autosuspend.  Together the port stays clocked while Bluetooth is on; with
     # the knob set to N the stock behaviour comes back.
     write /sys/bus/platform/drivers/msm_serial_hs/75af000.uart/power/control on
+    # Baseband: the modem is not started by the bootloader on this boot flow,
+    # and the kernel PIL can only find the images when the firmware search path
+    # points at the modem partition (the stock layout keeps them in
+    # /vendor/firmware-modem/image, outside the default /firmware/image).
+    # boot_modem is a diagnostic knob in drivers/soc/qcom/subsystem_restart.c
+    # that requests the PIL bring-up; once the RIL userspace opens a QMI
+    # channel the kernel demand-boots the modem by itself and this can go
+    # away.
+    write /sys/module/firmware_class/parameters/path /vendor/firmware-modem/image
+    write /sys/module/subsystem_restart/parameters/boot_modem 1
     chown bluetooth bluetooth /sys/module/bluetooth_power/parameters/power
     chown bluetooth net_bt /sys/class/rfkill/rfkill0/type
     chown bluetooth net_bt /sys/class/rfkill/rfkill0/state
