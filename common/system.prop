@@ -167,4 +167,17 @@ external_storage.sdcardfs.enabled=false
 # Stock ROM runs the RIL in dual-SIM mode (rild.libpath2 plus a second rild
 # instance for slot 2 in init.rilchip.rc); without this the framework brings up
 # a single phone and slot 2 is never probed.
-persist.radio.multisim.config=dsds
+persist.radio.multisim.config=ss
+
+# Telephony: the stock firmware used LTE/CDMA/EVDO/GSM/WCDMA on slot 1 and
+# GSM on slot 2.  Without this AOSP falls back to NETWORK_MODE_WCDMA_PREF,
+# which never asks the modem to attach to LTE on a China Telecom card.
+ro.telephony.default_network=9
+# Mobile data on by default (AOSP reads this for the initial setting).
+ro.com.android.mobiledata=true
+# The stock firmware declares two physical SIM slots; the vendor RIL uses the
+# slot count to keep the two DSDS rild instances from fighting over the modem.
+ro.multisim.simslotcount=1
+# This is a single-SIM China Telecom build; tell the framework the (single)
+# phone is a CDMA/LTE world phone so Settings can build the network-mode list.
+ro.telephony.lteOnCdmaDevice=0

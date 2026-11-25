@@ -15,6 +15,9 @@ LOCAL_MODULE_CLASS := SHARED_LIBRARIES
 
 LOCAL_SHARED_LIBRARIES := liblog
 
+# RIL_CardStatus_v6 / RIL_REQUEST_* definitions
+LOCAL_C_INCLUDES := hardware/ril/include
+
 LOCAL_CFLAGS := -Wall -Werror
 
 include $(BUILD_SHARED_LIBRARY)

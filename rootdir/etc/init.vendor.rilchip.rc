@@ -23,7 +23,7 @@ service ril-daemon /vendor/bin/hw/rild -l "/vendor/lib64/libsec-ril.so"
     # Preload them so the vendor library binds to these instead of the A11
     # system libraries, without touching libutils/protobuf for the rest of
     # the system.
-    setenv LD_PRELOAD /vendor/lib64/libril_compat_shim.so:/vendor/lib64/libprotobuf-cpp-full.so
+    setenv LD_PRELOAD /vendor/lib64/libril_compat_shim.so:/vendor/lib64/libprotobuf-cpp-full-2x.so
     group radio cache inet misc audio log system drmrpc vpn readproc wakelock
     socket sap_uim_socket1 stream 660 bluetooth bluetooth
 
@@ -35,7 +35,7 @@ service ril-daemon1 /vendor/bin/hw/rild -c 2 -l "/vendor/lib64/libsec-ril.so"
     class main
     user root
     seclabel u:r:radio:s0
-    setenv LD_PRELOAD /vendor/lib64/libril_compat_shim.so:/vendor/lib64/libprotobuf-cpp-full.so
+    setenv LD_PRELOAD /vendor/lib64/libril_compat_shim.so:/vendor/lib64/libprotobuf-cpp-full-2x.so
     group radio cache inet misc audio log system drmrpc vpn readproc wakelock
 
 # QMUX must be in multiple groups to support external process connections

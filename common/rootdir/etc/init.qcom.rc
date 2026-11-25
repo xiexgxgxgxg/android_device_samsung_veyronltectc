@@ -858,19 +858,10 @@ service battery_monitor /system/bin/battery_monitor
 # (they need an explicit seclabel and the vendor RIL compatibility shim
 # preloaded).  Keep the stock extra instances disabled so two rild processes
 # never fight over the same modem slot.
-service vendor.ril-daemon2 /vendor/bin/hw/rild -c 2
-    class main
-    user radio
-    group radio cache inet misc audio sdcard_r sdcard_rw diag oem_2901 log
-    capabilities BLOCK_SUSPEND NET_ADMIN NET_RAW
-    disabled
-
-service vendor.ril-daemon3 /vendor/bin/hw/rild -c 3
-    class main
-    user radio
-    group radio cache inet misc audio sdcard_r sdcard_rw diag oem_2901 log
-    capabilities BLOCK_SUSPEND NET_ADMIN NET_RAW
-    disabled
+# The stock extra RIL instances are not used: rild is started from
+# init.vendor.rilchip.rc, which is the only place that sets the vendor RIL
+# path, the LD_PRELOAD shim and the seclabel / uid this 3.18 init needs.
+# (See the comment in init.class_main.sh as well.)
 
 service profiler_daemon /system/bin/profiler_daemon
     class late_start

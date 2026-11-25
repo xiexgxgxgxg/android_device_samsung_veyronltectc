@@ -119,21 +119,13 @@ case "$baseband" in
 
     multisim=`getprop persist.radio.multisim.config`
 
-    if [ "$multisim" = "dsds" ] || [ "$multisim" = "dsda" ]; then
-        if [ "$qcrild_status" = "true" ]; then
-          start vendor.qcrild2
-        else
-          start vendor.ril-daemon2
-        fi
-    elif [ "$multisim" = "tsts" ]; then
-        if [ "$qcrild_status" = "true" ]; then
-          start vendor.qcrild2
-          start vendor.qcrild3
-        else
-          start vendor.ril-daemon2
-          start vendor.ril-daemon3
-        fi
-    fi
+    # The stock extra RIL services are intentionally NOT started here.  This
+    # port runs its own slot-2 instance (ril-daemon1 in init.vendor.rilchip.rc)
+    # with the vendor RIL path, the LD_PRELOAD compatibility shim and the
+    # seclabel it needs; the stock vendor.ril-daemon2/3 have neither of the
+    # three, so starting them only creates a second (dead) radio stack that
+    # competes for the modem's QMI clients.
+    :
 
     case "$datamode" in
         "tethered")
