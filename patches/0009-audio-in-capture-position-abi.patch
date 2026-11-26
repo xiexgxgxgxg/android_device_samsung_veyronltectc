@@ -1,0 +1,71 @@
+diff --git a/audio/core/all-versions/default/StreamIn.cpp b/audio/core/all-versions/default/StreamIn.cpp
+index d38e225c0..8a6dcfeee 100644
+--- a/audio/core/all-versions/default/StreamIn.cpp
++++ b/audio/core/all-versions/default/StreamIn.cpp
+@@ -42,7 +42,8 @@ class ReadThread : public Thread {
+    public:
+     // ReadThread's lifespan never exceeds StreamIn's lifespan.
+     ReadThread(std::atomic<bool>* stop, audio_stream_in_t* stream, StreamIn::CommandMQ* commandMQ,
+-               StreamIn::DataMQ* dataMQ, StreamIn::StatusMQ* statusMQ, EventFlag* efGroup)
++               StreamIn::DataMQ* dataMQ, StreamIn::StatusMQ* statusMQ, EventFlag* efGroup,
++               bool hasCapturePosition)
+         : Thread(false /*canCallJava*/),
+           mStop(stop),
+           mStream(stream),
+@@ -50,6 +51,7 @@ class ReadThread : public Thread {
+           mDataMQ(dataMQ),
+           mStatusMQ(statusMQ),
+           mEfGroup(efGroup),
++          mHasCapturePosition(hasCapturePosition),
+           mBuffer(nullptr) {}
+     bool init() {
+         mBuffer.reset(new (std::nothrow) uint8_t[mDataMQ->getQuantumCount()]);
+@@ -64,6 +66,12 @@ class ReadThread : public Thread {
+     StreamIn::DataMQ* mDataMQ;
+     StreamIn::StatusMQ* mStatusMQ;
+     EventFlag* mEfGroup;
++    // audio_stream_in_t::get_capture_position was added in
++    // AUDIO_DEVICE_API_VERSION_3_0 (Android 8.0).  A pre-3.0 HAL's struct ends
++    // before it, so simply reading the pointer runs off the end of the struct
++    // (the W2017 6.0.1 HAL reports a garbage pointer and the reader thread
++    // crashes at pc=0).
++    bool mHasCapturePosition;
+     std::unique_ptr<uint8_t[]> mBuffer;
+     IStreamIn::ReadParameters mParameters;
+     IStreamIn::ReadStatus mStatus;
+@@ -97,6 +105,12 @@ void ReadThread::doRead() {
+ }
+ 
+ void ReadThread::doGetCapturePosition() {
++    if (!mHasCapturePosition) {
++        mStatus.reply.capturePosition.frames = 0;
++        mStatus.reply.capturePosition.time = 0;
++        mStatus.retval = Result::NOT_SUPPORTED;
++        return;
++    }
+     mStatus.retval = StreamIn::getCapturePositionImpl(
+         mStream, &mStatus.reply.capturePosition.frames, &mStatus.reply.capturePosition.time);
+ }
+@@ -392,7 +406,8 @@ Return<void> StreamIn::prepareForReading(uint32_t frameSize, uint32_t framesCoun
+     // Create and launch the thread.
+     sp<ReadThread> tempReadThread =
+             new ReadThread(&mStopReadThread, mStream, tempCommandMQ.get(), tempDataMQ.get(),
+-                           tempStatusMQ.get(), tempElfGroup.get());
++                           tempStatusMQ.get(), tempElfGroup.get(),
++                           mDevice->version() >= AUDIO_DEVICE_API_VERSION_3_0);
+     if (!tempReadThread->init()) {
+         ALOGW("failed to start reader thread: %s", strerror(-status));
+         sendError(Result::INVALID_ARGUMENTS);
+@@ -453,6 +468,12 @@ Return<void> StreamIn::debug(const hidl_handle& fd, const hidl_vec<hidl_string>&
+ 
+ #if MAJOR_VERSION >= 4
+ Return<void> StreamIn::updateSinkMetadata(const SinkMetadata& sinkMetadata) {
++    // update_sink_metadata was added in AUDIO_DEVICE_API_VERSION_3_0
++    // (Android 8.0); a pre-3.0 audio_stream_in has no such field, so do not
++    // read it at all for the legacy 6.0.1 HAL.
++    if (mDevice->version() < AUDIO_DEVICE_API_VERSION_3_0) {
++        return Void();  // legacy HAL has no metadata support
++    }
+     if (mStream->update_sink_metadata == nullptr) {
+         return Void();  // not supported by the HAL
+     }

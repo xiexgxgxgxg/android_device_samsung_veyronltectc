@@ -17,6 +17,98 @@
 #include <stdlib.h>
 #include <string.h>
 #include <android/log.h>
+#include <sys/system_properties.h>
+
+
+/*
+ * P-CSCF on this platform is delivered by the modem through QMI IMS (Samsung's
+ * "SDM SIP config"), not through the PCO of the data call.  libsec-ril stores
+ * it in ril.pcscfv4.* / ril.pcscfv6.* properties but the legacy
+ * RIL_Data_Call_Response_v11 ABI has a single IPv4-only pcscf string, so A11
+ * never sees the IPv6 P-CSCF addresses it needs for SIP REGISTER.
+ *
+ * Republish whatever the modem reported in the AOSP pcscf field; libril hands
+ * that string to the framework as-is and the framework parses it as a
+ * space-delimited address list.
+ */
+struct pcscf_collection {
+    char value[8 * PROP_VALUE_MAX];
+    size_t len;
+};
+
+static int pcscf_value_usable(const char *value)
+{
+    if (value == NULL || value[0] == '\0')
+        return 0;
+    /* 0.0.0.0 / :: / ::0 -- all-zero placeholders */
+    for (const char *p = value; *p != '\0'; p++) {
+        if (*p != '0' && *p != ':' && *p != '.')
+            return 1;
+    }
+    return 0;
+}
+
+static int pcscf_collection_has(const struct pcscf_collection *c, const char *value)
+{
+    size_t n = strlen(value);
+    const char *p = c->value;
+
+    while (*p != '\0') {
+        const char *end = strchr(p, ' ');
+        size_t len = (end == NULL) ? strlen(p) : (size_t)(end - p);
+        if (len == n && memcmp(p, value, n) == 0)
+            return 1;
+        if (end == NULL)
+            break;
+        p = end + 1;
+    }
+    return 0;
+}
+
+static void pcscf_collection_add(struct pcscf_collection *c, const char *value)
+{
+    size_t n;
+
+    if (!pcscf_value_usable(value) || pcscf_collection_has(c, value))
+        return;
+
+    n = strlen(value);
+    if (c->len + n + 2 >= sizeof(c->value))
+        return;
+    if (c->len != 0)
+        c->value[c->len++] = ' ';
+    memcpy(c->value + c->len, value, n);
+    c->len += n;
+    c->value[c->len] = '\0';
+}
+
+static void pcscf_collect_cb(const prop_info *pi, void *cookie)
+{
+    struct pcscf_collection *c = (struct pcscf_collection *)cookie;
+    char name[PROP_NAME_MAX];
+    char value[PROP_VALUE_MAX];
+
+    if (__system_property_read(pi, name, value) < 0)
+        return;
+    if (strncmp(name, "ril.pcscfv4.", 12) != 0 &&
+            strncmp(name, "ril.pcscfv6.", 12) != 0)
+        return;
+    pcscf_collection_add(c, value);
+}
+
+static size_t pcscf_from_properties(char *out, size_t cap)
+{
+    struct pcscf_collection c;
+
+    if (out == NULL || cap == 0)
+        return 0;
+    memset(&c, 0, sizeof(c));
+    __system_property_foreach(pcscf_collect_cb, &c);
+    if (c.len == 0 || c.len >= cap)
+        return 0;
+    memcpy(out, c.value, c.len + 1);
+    return c.len;
+}
 
 extern "C" {
 
@@ -453,18 +545,30 @@ extern "C" void RIL_onRequestComplete(RIL_Token token, RIL_Errno error, void* re
          * rewrite only the address string and pass that on. */
         if (responselen == sizeof(RIL_Data_Call_Response_v11)) {
             RIL_Data_Call_Response_v11 dc = *(RIL_Data_Call_Response_v11 *)response;
+            char pcscf[8 * PROP_VALUE_MAX];
+            char *fixed = NULL;
             int prefix = iface_v4_prefix(dc.ifname);
+
             if (prefix > 0 && prefix < 32 && dc.addresses != NULL) {
-                char *fixed = fix_address_prefixes(dc.addresses, prefix);
+                fixed = fix_address_prefixes(dc.addresses, prefix);
                 if (fixed != NULL) {
                     dc.addresses = fixed;
                     __android_log_print(ANDROID_LOG_INFO, "RILSHIM",
                                         "data call addresses fixed: %s", fixed);
-                    real_fn(token, error, &dc, sizeof(dc));
-                    free(fixed);
-                    return;
                 }
             }
+
+            /* The legacy v11 pcscf field is IPv4-only and this modem answers
+             * through QMI IMS, so republish what libsec-ril recorded. */
+            if (pcscf_from_properties(pcscf, sizeof(pcscf)) > 0) {
+                dc.pcscf = pcscf;
+                __android_log_print(ANDROID_LOG_INFO, "RILSHIM",
+                                    "data call pcscf from modem: %s", pcscf);
+            }
+
+            real_fn(token, error, &dc, sizeof(dc));
+            free(fixed);
+            return;
         } else if (responselen == sizeof(RIL_Data_Call_Response_v9)) {
             RIL_Data_Call_Response_v9 dc = *(RIL_Data_Call_Response_v9 *)response;
             int prefix = iface_v4_prefix(dc.ifname);

@@ -875,3 +875,21 @@ on boot
     chmod 444 /sys/class/sec/sdinfo/data
     chown system system /sys/block/mmcblk0/diskios
     chmod 660 /sys/block/mmcblk0/diskios
+
+# Sensors: the stock 6.0.1 sensor stack is a daemon (Qualcomm sensordaemon,
+# started by init.qcom.sensors.sh) plus the SSC HAL.  Without the daemon the
+# HAL's libsensor1 cannot connect and the framework sees no sensors at all.
+service vendor.sensors.qti /vendor/bin/sensors.qcom
+    class core
+    user root
+    group root
+    ioprio rt 4
+
+# The stock 6.0.1 sensor daemon (vendor.sensors.qti) only accepts its storage
+# directory if realpath() of the requested path equals the path itself, so
+# /persist has to be a real mount point instead of the usual symlink to
+# /mnt/vendor/persist.  With the symlink the daemon aborts with
+# "sns_fsa_la.c(89): invalid directory path" and sensor1_open() fails.
+on post-fs-data
+    mkdir /persist 0771 system system
+    mount none /mnt/vendor/persist /persist bind

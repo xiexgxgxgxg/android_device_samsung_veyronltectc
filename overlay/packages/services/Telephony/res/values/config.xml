@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Bind the in-tree PhhIms IMS stack as the MMTEL provider; the stock
+         6.0.1 Samsung IMS jars cannot run on Android 11. -->
+    <string name="config_ims_mmtel_package" translatable="false">me.phh.ims</string>
+</resources>

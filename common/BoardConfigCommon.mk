@@ -51,7 +51,7 @@ TARGET_NO_BOOTLOADER := true
 # Kernel
 BOARD_KERNEL_BASE := 0x80000000
 BOARD_KERNEL_CMDLINE := androidboot.hardware=qcom msm_rtb.filter=0x237 ehci-hcd.park=3 androidboot.bootdevice=624000.ufshc lpm_levels.sleep_disabled=1 rcupdate.rcu_expedited=1 cma=32M@0-0xffffffff loop.max_part=7
-BOARD_KERNEL_CMDLINE += androidboot.selinux=permissive
+BOARD_KERNEL_CMDLINE += androidboot.selinux=permissive sdlog_period_ms=200
 # Debug only
 #BOARD_KERNEL_CMDLINE += console=ttyHSL0,115200n8 ignore_loglevel
 BOARD_KERNEL_IMAGE_NAME := Image.gz
@@ -158,11 +158,10 @@ BOARD_ROOT_EXTRA_SYMLINKS := \
     /vendor/dsp:/dsp \
     /vendor/firmware-modem:/firmware-modem \
     /vendor/firmware_mnt:/firmware \
-    /vendor/bt_firmware:/bt_firmware \
-    /mnt/vendor/persist:/persist
+    /vendor/bt_firmware:/bt_firmware
 
 # Root
-BOARD_ROOT_EXTRA_FOLDERS := efs
+BOARD_ROOT_EXTRA_FOLDERS := efs persist
 
 # Fingerprint
 TARGET_SEC_FP_HAL_VARIANT := bauth

@@ -18,6 +18,6 @@ LOCAL_SHARED_LIBRARIES := liblog
 # RIL_CardStatus_v6 / RIL_REQUEST_* definitions
 LOCAL_C_INCLUDES := hardware/ril/include
 
-LOCAL_CFLAGS := -Wall -Werror
+LOCAL_CFLAGS := -Wall -Werror -Wno-deprecated-declarations
 
 include $(BUILD_SHARED_LIBRARY)

@@ -1,0 +1,39 @@
+diff --git a/services/core/java/com/android/server/display/AutomaticBrightnessController.java b/services/core/java/com/android/server/display/AutomaticBrightnessController.java
+index e5c7cb1d489..6c551322b95 100644
+--- a/services/core/java/com/android/server/display/AutomaticBrightnessController.java
++++ b/services/core/java/com/android/server/display/AutomaticBrightnessController.java
+@@ -71,10 +71,10 @@ class AutomaticBrightnessController {
+ 
+     // Length of the ambient light horizon used to calculate the long term estimate of ambient
+     // light.
+-    private static final int AMBIENT_LIGHT_LONG_HORIZON_MILLIS = 10000;
++    private static final int AMBIENT_LIGHT_LONG_HORIZON_MILLIS = 1500;
+ 
+     // Length of the ambient light horizon used to calculate short-term estimate of ambient light.
+-    private static final int AMBIENT_LIGHT_SHORT_HORIZON_MILLIS = 2000;
++    private static final int AMBIENT_LIGHT_SHORT_HORIZON_MILLIS = 500;
+ 
+     // Callbacks for requesting updates to the display's power state
+     private final Callbacks mCallbacks;
+@@ -748,17 +748,10 @@ class AutomaticBrightnessController {
+         // If screenAutoBrightness is set, we should have screen{Brightening,Darkening}Threshold,
+         // in which case we ignore the new screen brightness if it doesn't differ enough from the
+         // previous one.
+-        if (!Float.isNaN(mScreenAutoBrightness)
+-                && !isManuallySet
+-                && newScreenAutoBrightness > mScreenDarkeningThreshold
+-                && newScreenAutoBrightness < mScreenBrighteningThreshold) {
+-            if (mLoggingEnabled) {
+-                Slog.d(TAG, "ignoring newScreenAutoBrightness: "
+-                        + mScreenDarkeningThreshold + " < " + newScreenAutoBrightness
+-                        + " < " + mScreenBrighteningThreshold);
+-            }
+-            return;
+-        }
++        // [W2017] Do not swallow small brightness changes: the stock firmware
++        // applies every light sensor change directly, so use one step instead
++        // of the AOSP hysteresis "ignore" branch (which made covering the
++        // sensor dim the screen in several delayed steps).
+         if (!BrightnessSynchronizer.floatEquals(mScreenAutoBrightness,
+                 newScreenAutoBrightness)) {
+             if (mLoggingEnabled) {

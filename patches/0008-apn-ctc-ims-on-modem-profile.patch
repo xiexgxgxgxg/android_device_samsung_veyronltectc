@@ -1,0 +1,22 @@
+diff --git a/CN.xml b/CN.xml
+index 589ce86..9f61edf 100644
+--- a/CN.xml
++++ b/CN.xml
+@@ -20,6 +20,8 @@
+         carrier="中国电信 (China Telecom) NET IMS"
+         apn="ims"
+         carrier_id="2237"
++        modem_cognitive="true"
++        profile_id="2"
+         protocol="IPV4V6"
+         roaming_protocol="IPV4V6"
+         type="ims"
+@@ -54,6 +56,8 @@
+         carrier="中国电信 (China Telecom) NET IMS"
+         apn="ims"
+         carrier_id="2237"
++        modem_cognitive="true"
++        profile_id="2"
+         protocol="IPV4V6"
+         roaming_protocol="IPV4V6"
+         type="ims"

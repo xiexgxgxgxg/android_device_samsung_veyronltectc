@@ -81,4 +81,62 @@
         <item>"0,1"</item>
     </string-array>
 
+
+    <!-- VoLTE: the vendor IMS jars are 6.0.1 only; PhhIms provides an
+         Android 11 ImsService with its own SIP/IMS stack. -->
+    <bool name="config_device_volte_available">true</bool>
+    <bool name="config_carrier_volte_available">true</bool>
+    <bool name="config_device_vt_available">false</bool>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <!-- Auto brightness, calibrated by hand on this panel and accepted by the
+         user as-is:
+             0 lux (covered, dark room) -> 1  (dimmest the panel can show)
+             ~100 lux                   -> 60
+             ~117 lux (indoor)          -> ~66
+             5000+ lux (daylight)       -> 255
+         config_autoBrightnessLevels must be exactly one entry less than
+         config_autoBrightnessLcdBacklightValues (the framework prepends a
+         0 lux point). -->
+    <array name="config_autoBrightnessLevels">
+        <item>5</item>
+        <item>20</item>
+        <item>50</item>
+        <item>100</item>
+        <item>150</item>
+        <item>250</item>
+        <item>500</item>
+        <item>1000</item>
+        <item>2000</item>
+        <item>5000</item>
+    </array>
+    <array name="config_autoBrightnessLcdBacklightValues">
+        <item>1</item>
+        <item>3</item>
+        <item>8</item>
+        <item>25</item>
+        <item>60</item>
+        <item>77</item>
+        <item>85</item>
+        <item>105</item>
+        <item>135</item>
+        <item>180</item>
+        <item>255</item>
+    </array>
+    <array name="config_autoBrightnessDisplayValuesNits" />
+    <integer name="config_autoBrightnessBrighteningLightDebounce">800</integer>
+    <integer name="config_autoBrightnessDarkeningLightDebounce">800</integer>
+    <integer name="config_autoBrightnessShortTermModelTimeout">60000</integer>
 </resources>

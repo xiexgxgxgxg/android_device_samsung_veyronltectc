@@ -1,0 +1,37 @@
+// SPDX-License-Identifier: GPL-2.0
+
+// Android 11 ImsService providing VoLTE through a userspace SIP/IMS stack.
+//
+// Vendored from krazey/ims (PhhIms) and backported to the LineageOS 18.1
+// platform APIs; see README-A11.md for the list of changes.
+android_app {
+    name: "PhhIms",
+
+    srcs: [
+        "app/src/main/java/**/*.kt",
+        "app/src/main/java/**/*.java",
+    ],
+    resource_dirs: ["app/src/main/res"],
+    manifest: "app/src/main/AndroidManifest.xml",
+
+    certificate: "platform",
+    privileged: true,
+    platform_apis: true,
+
+    static_libs: [
+        "kotlin-stdlib",
+    ],
+
+    // The WebRTC AEC3 / rnnoise JNI helpers are optional debug features that
+    // only load when persist.phh.ims.webrtc_aec_delay_ms > 0. Their submodules
+    // are not vendored, so they are not built.
+}
+
+// Static RRO registering me.phh.ims as the IMS MmTel service with the Phone app.
+runtime_resource_overlay {
+    name: "PhhImsOverlay",
+    resource_dirs: ["overlay/res"],
+    manifest: "overlay/AndroidManifest.xml",
+    certificate: "platform",
+    product_specific: true,
+}

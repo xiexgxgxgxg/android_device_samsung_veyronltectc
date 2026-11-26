@@ -1,0 +1,14 @@
+diff --git a/packages/SystemUI/src/com/android/systemui/globalactions/GlobalActionsDialog.java b/packages/SystemUI/src/com/android/systemui/globalactions/GlobalActionsDialog.java
+index 981870ca205..80b49b77f3e 100644
+--- a/packages/SystemUI/src/com/android/systemui/globalactions/GlobalActionsDialog.java
++++ b/packages/SystemUI/src/com/android/systemui/globalactions/GlobalActionsDialog.java
+@@ -560,6 +560,9 @@ public class GlobalActionsDialog implements DialogInterface.OnDismissListener,
+         WindowManager.LayoutParams attrs = mDialog.getWindow().getAttributes();
+         attrs.setTitle("ActionsDialog");
+         attrs.layoutInDisplayCutoutMode = LAYOUT_IN_DISPLAY_CUTOUT_MODE_ALWAYS;
++        // W2017: the stock ROM keeps the power menu on screen until the user
++        // picks something; do not let the screen-off timer close it.
++        attrs.userActivityTimeout = -1;
+         mDialog.getWindow().setAttributes(attrs);
+         // Don't acquire soft keyboard focus, to avoid destroying state when capturing bugreports
+         mDialog.getWindow().setFlags(FLAG_ALT_FOCUSABLE_IM, FLAG_ALT_FOCUSABLE_IM);

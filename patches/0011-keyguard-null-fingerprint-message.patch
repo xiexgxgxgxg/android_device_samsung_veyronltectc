@@ -1,0 +1,26 @@
+diff --git a/packages/SystemUI/src/com/android/keyguard/KeyguardUpdateMonitor.java b/packages/SystemUI/src/com/android/keyguard/KeyguardUpdateMonitor.java
+index 98ec7867556..cbc936dd650 100644
+--- a/packages/SystemUI/src/com/android/keyguard/KeyguardUpdateMonitor.java
++++ b/packages/SystemUI/src/com/android/keyguard/KeyguardUpdateMonitor.java
+@@ -1282,12 +1282,19 @@ public class KeyguardUpdateMonitor implements TrustManager.TrustListener, Dumpab
+ 
+         @Override
+         public void onAuthenticationHelp(int helpMsgId, CharSequence helpString) {
+-            handleFingerprintHelp(helpMsgId, helpString.toString());
++            // The vendor fingerprint HAL can report an empty help/error message
++            // (it uses the 6.0.1 callback contract, where the string may be
++            // null).  Keyguard must not crash on it: an unguarded toString()
++            // here kills SystemUI and the screen then flickers on/off as the
++            // keyguard restarts.
++            handleFingerprintHelp(helpMsgId,
++                    helpString == null ? "" : helpString.toString());
+         }
+ 
+         @Override
+         public void onAuthenticationError(int errMsgId, CharSequence errString) {
+-            handleFingerprintError(errMsgId, errString.toString());
++            handleFingerprintError(errMsgId,
++                    errString == null ? "" : errString.toString());
+         }
+ 
+         @Override

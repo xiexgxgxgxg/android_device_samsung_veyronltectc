@@ -2177,6 +2177,20 @@
          HAL could not apply the native route.  This path is used when the
          device tree installs mixer_paths.xml as /system/etc/mixer_paths.xml
          instead of the S7 tasha file. -->
+    <path name="low-latency-playback handset">
+        <path name="low-latency-playback" />
+        <ctl name="SLIM RX0 MUX" value="AIF1_PB" />
+        <ctl name="SLIM_0_RX Channels" value="One" />
+        <ctl name="RX INT0_1 MIX1 INP0" value="RX0" />
+        <ctl name="RX INT0 DEM MUX" value="CLSH_DSM_OUT" />
+        <ctl name="EAR PA Gain" value="G_6_DB" />
+        <ctl name="EAR PA" value="On" />
+    </path>
+
+    <path name="low-latency-playback voip-handset-comm">
+        <path name="low-latency-playback handset" />
+    </path>
+
     <path name="low-latency-playback speaker">
         <path name="low-latency-playback" />
         <path name="speaker" />

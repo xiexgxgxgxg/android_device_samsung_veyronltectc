@@ -1,0 +1,13 @@
+diff --git a/data/keyboards/Generic.kl b/data/keyboards/Generic.kl
+index 51500439d3c..c33845044ad 100644
+--- a/data/keyboards/Generic.kl
++++ b/data/keyboards/Generic.kl
+@@ -406,6 +406,8 @@ key 484   B                 FUNCTION
+ 
+ key 522   STAR
+ key 523   POUND
++key 231   CALL
++key 254   APP_SWITCH
+ key 580   APP_SWITCH
+ key 582   VOICE_ASSIST
+ # Linux KEY_ASSISTANT

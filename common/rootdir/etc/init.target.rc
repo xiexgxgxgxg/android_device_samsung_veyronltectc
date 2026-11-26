@@ -197,12 +197,9 @@ service qcamerasvr /vendor/bin/mm-qcamera-daemon
     class late_start
     user camera
     group camera system inet input graphics
-    # Android 11's own mm-qcamera-daemon service (init.qcom.rc) is started
-    # on demand by the camera HAL.  This 6.0.1 auto-start duplicate only
-    # makes init restart a daemon that aborts in CAM_stopisp, burning a
-    # CPU core.  Keep the definition (camera work can re-enable it) but do
-    # not auto-start it.
-    disabled
+    # The camera HAL (mm-camera-intf) needs this daemon to own the V4L2
+    # video nodes; without it camera_v4l2_open fails with
+    # "posting of NEW_SESSION event failed" and no camera is exposed.
 
 #fingerprint service
 #service fingerprintd /system/vendor/bin/fingerprintd

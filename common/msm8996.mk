@@ -374,7 +374,9 @@ PRODUCT_PACKAGES += \
     init.target.rc \
     ueventd.qcom.rc \
     wifi_sec.rc \
-    wifiloader
+    wifiloader \
+    keypad_bl.sh \
+    keypad_bl.rc
 
 # Recovery
 PRODUCT_COPY_FILES += \

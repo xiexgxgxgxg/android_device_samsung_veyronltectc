@@ -1,0 +1,16 @@
+diff --git a/biometrics/fingerprint/2.1/default/android.hardware.biometrics.fingerprint@2.1-service.rc b/biometrics/fingerprint/2.1/default/android.hardware.biometrics.fingerprint@2.1-service.rc
+index 1667677bf..09ea7815a 100644
+--- a/biometrics/fingerprint/2.1/default/android.hardware.biometrics.fingerprint@2.1-service.rc
++++ b/biometrics/fingerprint/2.1/default/android.hardware.biometrics.fingerprint@2.1-service.rc
+@@ -1,4 +1,10 @@
+-service vendor.fps_hal /vendor/bin/hw/android.hardware.biometrics.fingerprint@2.1-service
++# W2017: the vendor tree ships the 64-bit Samsung fingerprint service (also
++# named vendor.fps_hal).  This 32-bit wrapper would block it: init keeps the
++# first definition of a service name and this one cannot work, because the
++# stock 32-bit Egis HAL has a NULL enumerate() and crashes the service on the
++# framework's first enumeration.  Keep the binary but do not start it.
++service vendor.fps_hal_aosp32 /vendor/bin/hw/android.hardware.biometrics.fingerprint@2.1-service
++    disabled
+     # "class hal" causes a race condition on some devices due to files created
+     # in /data. As a workaround, postpone startup until later in boot once
+     # /data is mounted.

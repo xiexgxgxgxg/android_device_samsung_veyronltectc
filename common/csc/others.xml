@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!-- Minimal CSC for the IMS line of work.
+     The stock CTC CSC has no IMS feature at all, so sec-ril reports
+     "CSC Feature State: IMS OFF, EPDG OFF" and never loads the IMS modem
+     configuration.  With this file it reports "IMS ON, EPDG OFF" and logs
+     "LoadModemConfiguration(): IMS feature is enabled" plus the imsd data
+     profile.  Only the IMS switch is set here; everything else stays at the
+     framework defaults so the SIM/data bring-up of 2026-11-25 is not touched. -->
+<SamsungMobileFeature>
+  <CscFeature_RIL_SupportImsService>TRUE</CscFeature_RIL_SupportImsService>
+  <CscFeature_RIL_SupportVolte>TRUE</CscFeature_RIL_SupportVolte>
+  <CscFeature_RIL_SupportEpdg>FALSE</CscFeature_RIL_SupportEpdg>
+</SamsungMobileFeature>

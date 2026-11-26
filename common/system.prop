@@ -167,7 +167,7 @@ external_storage.sdcardfs.enabled=false
 # Stock ROM runs the RIL in dual-SIM mode (rild.libpath2 plus a second rild
 # instance for slot 2 in init.rilchip.rc); without this the framework brings up
 # a single phone and slot 2 is never probed.
-persist.radio.multisim.config=ss
+persist.radio.multisim.config=dsds
 
 # Telephony: the stock firmware used LTE/CDMA/EVDO/GSM/WCDMA on slot 1 and
 # GSM on slot 2.  Without this AOSP falls back to NETWORK_MODE_WCDMA_PREF,
@@ -175,9 +175,28 @@ persist.radio.multisim.config=ss
 ro.telephony.default_network=9
 # Mobile data on by default (AOSP reads this for the initial setting).
 ro.com.android.mobiledata=true
-# The stock firmware declares two physical SIM slots; the vendor RIL uses the
-# slot count to keep the two DSDS rild instances from fighting over the modem.
-ro.multisim.simslotcount=1
+# The W2017 is a dual-SIM device (two physical slots); the stock ROM runs DSDS.
+ro.multisim.simslotcount=2
 # This is a single-SIM China Telecom build; tell the framework the (single)
 # phone is a CDMA/LTE world phone so Settings can build the network-mode list.
 ro.telephony.lteOnCdmaDevice=0
+
+# IMS/VoLTE bring-up: the carrier-config database has no China Telecom VoLTE
+# entry yet, so expose VoLTE until a real CarrierConfig override lands.
+# See W2017_LineageOS18.1_问题清单.md (VoLTE entry).
+persist.dbg.volte_avail_ovr=1
+
+# Sensors (stock ARG1 values). The HAL reads these QTI feature flags; without
+# them it enables features the firmware cannot provide (e.g. compass magnetic
+# calibration), the algorithm attribute request fails with "Request made to
+# disabled service" and Sensor::open() aborts, leaving the framework with no
+# sensors at all.
+persist.debug.sensors.hal=W
+debug.qualcomm.sns.daemon=I
+debug.qualcomm.sns.libsensor1=I
+ro.qti.sensors.cmc=false
+ro.qti.sensors.dpc=false
+ro.qti.sensors.facing=false
+ro.qti.sensors.fast_amd=false
+ro.qti.sensors.georv=false
+ro.qti.sensors.scrn_ortn=false

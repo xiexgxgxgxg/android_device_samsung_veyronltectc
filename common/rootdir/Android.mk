@@ -142,3 +142,20 @@ LOCAL_MODULE_CLASS := ETC
 LOCAL_SRC_FILES    := bin/loggy.sh
 LOCAL_MODULE_PATH  := $(TARGET_OUT_VENDOR_EXECUTABLES)
 include $(BUILD_PREBUILT)
+
+# W2017: keep the physical keypad backlight in sync with the LCD backlight
+include $(CLEAR_VARS)
+LOCAL_MODULE       := keypad_bl.sh
+LOCAL_MODULE_TAGS  := optional
+LOCAL_MODULE_CLASS := EXECUTABLES
+LOCAL_SRC_FILES    := bin/keypad_bl.sh
+LOCAL_MODULE_PATH  := $(TARGET_OUT)/bin
+include $(BUILD_PREBUILT)
+
+include $(CLEAR_VARS)
+LOCAL_MODULE       := keypad_bl.rc
+LOCAL_MODULE_TAGS  := optional
+LOCAL_MODULE_CLASS := ETC
+LOCAL_SRC_FILES    := etc/keypad_bl.rc
+LOCAL_MODULE_PATH  := $(TARGET_OUT_ETC)/init
+include $(BUILD_PREBUILT)

@@ -1,0 +1,6 @@
+cc_binary {
+    name: "lux",
+    vendor: true,
+    srcs: ["lux.c"],
+    shared_libs: ["libandroid", "liblog", "libcutils"],
+}

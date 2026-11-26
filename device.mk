@@ -40,6 +40,16 @@ PRODUCT_COPY_FILES += \
     frameworks/native/data/etc/android.hardware.telephony.gsm.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.telephony.gsm.xml \
     frameworks/native/data/etc/android.hardware.telephony.ims.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.telephony.ims.xml
 
+
+# IMS: Android 11 ImsService with an in-tree SIP/IMS stack (packages/apps/PhhIms),
+# plus the minimal CSC that makes sec-ril load the IMS modem configuration.
+PRODUCT_PACKAGES += \
+    PhhIms
+
+PRODUCT_COPY_FILES += \
+    $(LOCAL_PATH)/common/configs/privapp-permissions-phhims.xml:$(TARGET_COPY_OUT_SYSTEM)/etc/permissions/privapp-permissions-phhims.xml \
+    $(LOCAL_PATH)/common/csc/others.xml:$(TARGET_COPY_OUT_SYSTEM)/csc/others.xml
+
 # RIL
 PRODUCT_PACKAGES += \
     android.hardware.radio@1.4 \
