@@ -1,0 +1,10 @@
+diff --git a/camera/cameraserver/cameraserver.rc b/camera/cameraserver/cameraserver.rc
+index 8f51458d7f..1e1b19692e 100644
+--- a/camera/cameraserver/cameraserver.rc
++++ b/camera/cameraserver/cameraserver.rc
+@@ -1,4 +1,5 @@
+ service cameraserver /system/bin/cameraserver
++    setenv LD_PRELOAD "/system/lib/libcamparams_shim_sys.so /system/lib/libcammetadata_legacy_sys.so"
+     class main
+     user cameraserver
+     group audio camera input drmrpc

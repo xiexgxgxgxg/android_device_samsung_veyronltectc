@@ -1,0 +1,77 @@
+diff --git a/camera/provider/2.4/default/LegacyCameraProviderImpl_2_4.cpp b/camera/provider/2.4/default/LegacyCameraProviderImpl_2_4.cpp
+index 4cff1b79a..0baf8a02b 100644
+--- a/camera/provider/2.4/default/LegacyCameraProviderImpl_2_4.cpp
++++ b/camera/provider/2.4/default/LegacyCameraProviderImpl_2_4.cpp
+@@ -27,6 +27,7 @@
+ #include <cutils/properties.h>
+ #include <regex>
+ #include <string.h>
++#include <unistd.h>
+ #include <utils/Trace.h>
+ 
+ namespace android {
+@@ -46,6 +47,11 @@ const char *kHAL3_5 = "3.5";
+ const int kMaxCameraDeviceNameLen = 128;
+ const int kMaxCameraIdLen = 16;
+ 
++// veyronltectc: see the note in addDeviceNames(); probing HAL1 deadlocks in
++// the 6.0.1 Samsung module, so the probe stays off.  Flip this to true when
++// the HAL1 close path is fixed.
++const bool kProbeOpenLegacy = false;
++
+ bool matchDeviceName(const hidl_string& deviceName, std::string* deviceVersion,
+                      std::string* cameraId) {
+     std::string deviceNameStd(deviceName.c_str());
+@@ -84,8 +90,17 @@ void LegacyCameraProviderImpl_2_4::addDeviceNames(int camera_id, CameraDeviceSta
+     if (cam_new) {
+         mCallbacks->cameraDeviceStatusChange(deviceNamePair.second, status);
+     }
++    // NOTE (W2017 / veyronltectc): do not probe the HAL1 wrapper.  The
++    // 6.0.1 Samsung module advertises open_legacy, but its HAL1 close path
++    // deadlocks forever in QCamera2HardwareInterface::closeCamera() ->
++    // waitDeferredWork(): the deferred-work completion never arrives on
++    // Android 11, so LegacyCameraProviderImpl_2_4::initialize() hangs before
++    // the provider is ever registered and cameraserver sees zero cameras.
++    // Android 11 serves the camera1 API through Camera2Client on top of the
++    // camera3 device, so the legacy HAL1 device is not needed; treat the probe
++    // as "HAL1 not usable" instead of blocking startup on a deadlock.
+     if (deviceVersion >= CAMERA_DEVICE_API_VERSION_3_2 &&
+-            mModule->isOpenLegacyDefined()) {
++            mModule->isOpenLegacyDefined() && kProbeOpenLegacy) {
+         // try open_legacy to see if it actually works
+         struct hw_device_t* halDev = nullptr;
+         int ret = mModule->openLegacy(cameraId, CAMERA_DEVICE_API_VERSION_1_0, &halDev);
+@@ -266,6 +281,23 @@ LegacyCameraProviderImpl_2_4::LegacyCameraProviderImpl_2_4() :
+ LegacyCameraProviderImpl_2_4::~LegacyCameraProviderImpl_2_4() {}
+ 
+ bool LegacyCameraProviderImpl_2_4::initialize() {
++    // veyronltectc: the 6.0.1 camera stack keeps the sensor probe in
++    // mm-qcamera-daemon, and the HAL caches its camera count the first time
++    // it is loaded.  init starts the daemon from its boot_completed action
++    // (it must not run before the kernel camera subdevices exist), so wait
++    // for it here before hw_get_module() loads the HAL.
++    for (int i = 0; i < 100; i++) {
++        char state[PROPERTY_VALUE_MAX];
++        property_get("init.svc.mm-qcamera-daemon", state, "");
++        if (strcmp(state, "running") == 0) {
++            break;
++        }
++        usleep(100 * 1000);
++    }
++    // The daemon needs a moment to probe the sensors and publish the camera
++    // list after init reports the service as running.
++    usleep(2000 * 1000);
++
+     camera_module_t *rawModule;
+     int err = hw_get_module(CAMERA_HARDWARE_MODULE_ID,
+             (const hw_module_t **)&rawModule);
+@@ -313,6 +345,9 @@ bool LegacyCameraProviderImpl_2_4::initialize() {
+     }
+ 
+     mNumberOfLegacyCameras = mModule->getNumberOfCameras();
++    if (mNumberOfLegacyCameras == 0) {
++        ALOGW("%s: no camera reported by the HAL", __FUNCTION__);
++    }
+     for (int i = 0; i < mNumberOfLegacyCameras; i++) {
+         struct camera_info info;
+         auto rc = mModule->getCameraInfo(i, &info);

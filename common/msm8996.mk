@@ -83,6 +83,10 @@ PRODUCT_PACKAGES += \
     android.hardware.camera.provider@2.4-service \
     libcamparams_shim \
     libcamparams_shim_sys \
+    libcammetadata_legacy \
+    libcammetadata_legacy_sys \
+    libmmcamera_mutex_shim \
+    display_qservice_stub \
     libnh_shim \
     com.dsi.ant.antradio_library
 

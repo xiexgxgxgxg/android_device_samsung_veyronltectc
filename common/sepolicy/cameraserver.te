@@ -11,3 +11,8 @@ allow cameraserver sec_camera_prop:property_service set;
 allow cameraserver sysfs_camera_writable:dir search;
 allow cameraserver sysfs_camera_writable:file { getattr open read };
 allow cameraserver sysfs:file { getattr open read write };
+
+# The wrapped 6.0.1 camera HAL asks ServiceManager for the Qualcomm display
+# service ("display.qservice") during openCamera(); it is provided by
+# display_qservice_stub, which publishes it under the default service context.
+allow cameraserver default_android_service:service_manager find;

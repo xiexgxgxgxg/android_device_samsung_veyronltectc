@@ -24,3 +24,27 @@ LOCAL_MODULE := libmmcamera_mutex_shim
 LOCAL_MODULE_TAGS := optional
 LOCAL_VENDOR_MODULE := true
 include $(BUILD_SHARED_LIBRARY)
+
+# android::CameraMetadata ABI: 6.0.1 has only mBuffer, Android 11 added
+# mLocked.  camera.msm8996.so is rewritten (tools/patch_camera_metadata_abi.py)
+# to reference android::LegacyMetadata, which this library implements with the
+# 6.0.1 layout.  Vendor copy is preloaded by the camera provider, system copy
+# by cameraserver, because both processes dlopen the 6.0.1 HAL.
+include $(CLEAR_VARS)
+LOCAL_SRC_FILES := camera_metadata_legacy.cpp
+LOCAL_MODULE := libcammetadata_legacy
+LOCAL_MODULE_TAGS := optional
+LOCAL_VENDOR_MODULE := true
+LOCAL_MULTILIB := 32
+LOCAL_SHARED_LIBRARIES := liblog libutils libcamera_metadata
+LOCAL_CFLAGS := -Wall -Werror
+include $(BUILD_SHARED_LIBRARY)
+
+include $(CLEAR_VARS)
+LOCAL_SRC_FILES := camera_metadata_legacy.cpp
+LOCAL_MODULE := libcammetadata_legacy_sys
+LOCAL_MODULE_TAGS := optional
+LOCAL_MULTILIB := 32
+LOCAL_SHARED_LIBRARIES := liblog libutils libcamera_metadata
+LOCAL_CFLAGS := -Wall -Werror
+include $(BUILD_SHARED_LIBRARY)

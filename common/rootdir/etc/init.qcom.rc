@@ -461,6 +461,17 @@ on property:persist.vendor.ssr.enable_ramdumps=0
 
 on property:sys.boot_completed=1
     write /dev/kmsg "Boot completed "
+    # The 6.0.1 camera daemon probes the kernel camera subdevices when it
+    # starts and reads their names from the media topology.  Starting it from
+    # class hal (right after the kernel comes up) races with that topology and
+    # leaves it with zero cameras, so start it here instead; the camera
+    # provider waits for it (see LegacyCameraProviderImpl_2_4::initialize).
+    start mm-qcamera-daemon
+    # The camera provider loads the 6.0.1 HAL, which caches the camera list at
+    # load time, so it must not be started before the daemon is usable.  It
+    # waits for the daemon itself; starting both here makes sure cameraserver
+    # re-enumerates through onRegistration() once the HAL reports cameras.
+    start vendor.camera-provider-2-4
     #Reset read ahead for dm-0 and dm-1 to 512kb
     write /sys/block/dm-0/queue/read_ahead_kb 512
     write /sys/block/dm-1/queue/read_ahead_kb 512
@@ -1051,19 +1062,23 @@ service sdmlogsd /system/bin/logcat -b all -v threadtime -f /mnt/sdcard/sdmlog.t
     disabled
     oneshot
 
-# Vendor camera daemon for the 6.0.1 mm-camera2 stack; the camera HAL starts
-# it with ctl.start, so it has to exist as a service here.
+# Vendor camera daemon for the 6.0.1 mm-camera2 stack.  This is the only
+# definition of the daemon (the stock `qcamerasvr` duplicate is gone).  The
+# camera HAL talks to it through /data/misc/camera/cam_socket*, and the
+# provider's getCameraInfo() opens a session, so it has to be up before the
+# provider registers.  It is not started from a class: it must not run before
+# the kernel camera subdevices have been registered, so the boot_completed
+# action below starts it; the provider waits for it to report cameras.
 service mm-qcamera-daemon /vendor/bin/mm-qcamera-daemon
-    class late_start
+    class hal
+    disabled
     user camera
     group camera system inet input graphics radio
     # Android 6.0.1 blob: libmmcamera2_isp_modules.so destroys an ISP session
     # mutex twice, which Android 11's bionic turns into abort() and kills the
-    # daemon on every camera close.  The shim makes the second destroy a no-op.
+    # daemon on every camera close.  The shim turns only the second destroy
+    # into a no-op; every other destroy keeps normal libc semantics.
     setenv LD_PRELOAD /vendor/lib/libmmcamera_mutex_shim.so
-    # Started explicitly from post-fs-data (init.veyronltectc.rc): cameraserver
-    # enumerates the cameras in class main, before late_start would run.
-    disabled
 
 # Samsung sensor hub daemon (SSC): the light/proximity sensors on this device
 # come from the sensor hub; the sensors HAL talks to it via this service.

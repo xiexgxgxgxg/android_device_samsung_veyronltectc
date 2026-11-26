@@ -9,16 +9,38 @@
  * restarted by init, re-probes both sensors and the camera HAL's session
  * setup hangs forever in msm_post_event().
  *
- * Destroying a mutex only releases the object's own state; the memory is
- * owned by the module instance, so ignoring the call leaks nothing that
- * matters for the lifetime of the daemon.
+ * Only the *second* destroy is turned into a no-op: bionic marks a destroyed
+ * mutex by storing 0xffff in its 16-bit state word (pthread_mutex_destroy()
+ * calls HandleUsingDestroyedMutex() when it sees that), while every other
+ * destroy keeps the normal libc semantics.  That keeps the workaround local
+ * to the driver bug instead of neutering pthread_mutex_destroy() for every
+ * other user in the daemon.
  */
+#include <dlfcn.h>
 #include <pthread.h>
+#include <stdatomic.h>
+
+#define BIONIC_MUTEX_STATE_DESTROYED 0xffff
 
 int pthread_mutex_destroy(pthread_mutex_t *mutex)
 {
-	(void)mutex;
-	return 0;
+	static int (*real_destroy)(pthread_mutex_t *);
+
+	if (mutex == NULL) {
+		return 22; /* EINVAL */
+	}
+	if (atomic_load_explicit((_Atomic uint16_t *)(void *)mutex,
+			memory_order_relaxed) == BIONIC_MUTEX_STATE_DESTROYED) {
+		return 0;
+	}
+	if (real_destroy == NULL) {
+		real_destroy = (int (*)(pthread_mutex_t *))
+			dlsym(RTLD_NEXT, "pthread_mutex_destroy");
+		if (real_destroy == NULL) {
+			return 0;
+		}
+	}
+	return real_destroy(mutex);
 }
 
 /*

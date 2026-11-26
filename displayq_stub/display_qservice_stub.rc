@@ -1,0 +1,10 @@
+# Qualcomm display service name expected by the wrapped 6.0.1 camera HAL.
+# QCamera3HardwareInterface::openCamera() blocks for 5 s waiting for
+# "display.qservice" and then runs with a NULL display client, which breaks
+# the preview stream.  The Android 11 display stack has no such service, so
+# this stub publishes the name and hands out a dummy IQClient binder.
+service display_qservice_stub /vendor/bin/display_qservice_stub
+    class core
+    user system
+    group system
+    oneshot
