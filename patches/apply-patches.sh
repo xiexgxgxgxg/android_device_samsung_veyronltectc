@@ -1,5 +1,5 @@
 #!/bin/bash
-# Apply the device-specific AOSP patches (0001-0007) to a fresh Lineage tree.
+# Apply the device-specific AOSP patches (0001-0019) to a fresh Lineage tree.
 # Idempotent: a patch that is already applied is skipped.
 set -e
 
@@ -29,10 +29,12 @@ apply hardware/interfaces          "$P/0009-audio-in-capture-position-abi.patch"
 apply hardware/interfaces          "$P/0010-fingerprint-use-64bit-samsung-service.patch"
 apply frameworks/base              "$P/0011-keyguard-null-fingerprint-message.patch"
 apply frameworks/base              "$P/0012-autobrightness-responsive.patch"
-
-echo "all patches applied"
-apply frameworks/base               "$P/0013-global-actions-keep-power-menu-on.patch"
-apply frameworks/base               "$P/0014-generic-kl-map-key-recent-to-app-switch.patch"
+apply frameworks/base              "$P/0013-global-actions-keep-power-menu-on.patch"
+apply frameworks/base              "$P/0014-generic-kl-map-key-recent-to-app-switch.patch"
 apply hardware/interfaces          "$P/0015-camera-provider-preload-metadata-shim.patch"
 apply frameworks/av                "$P/0016-cameraserver-preload-metadata-shim.patch"
 apply hardware/interfaces          "$P/0017-camera-provider-wait-for-daemon.patch"
+apply hardware/interfaces          "$P/0018-gnss-service-inet.patch"
+apply packages/apps/Gallery2       "$P/0019-gallery2-gps-latlong.patch"
+
+echo "all patches applied"
