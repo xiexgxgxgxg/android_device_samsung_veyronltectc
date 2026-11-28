@@ -36,5 +36,6 @@ apply frameworks/av                "$P/0016-cameraserver-preload-metadata-shim.p
 apply hardware/interfaces          "$P/0017-camera-provider-wait-for-daemon.patch"
 apply hardware/interfaces          "$P/0018-gnss-service-inet.patch"
 apply packages/apps/Gallery2       "$P/0019-gallery2-gps-latlong.patch"
+apply hardware/interfaces          "$P/0020-camera-device-blob-recycle.patch"
 
 echo "all patches applied"

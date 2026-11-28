@@ -1,0 +1,186 @@
+diff --git a/camera/device/3.2/default/CameraDeviceSession.cpp b/camera/device/3.2/default/CameraDeviceSession.cpp
+index 99cdccbcd..25fab5156 100644
+--- a/camera/device/3.2/default/CameraDeviceSession.cpp
++++ b/camera/device/3.2/default/CameraDeviceSession.cpp
+@@ -1033,6 +1033,9 @@ Return<void> CameraDeviceSession::configureStreams(
+     // hold the inflight lock for entire configureStreams scope since there must not be any
+     // inflight request/results during stream configuration.
+     Mutex::Autolock _l(mInflightLock);
++    /* New session: the previously handed out handle copies point at buffers
++     * that are about to be freed. */
++    clearLegacyHandles();
+     if (!mInflightBuffers.empty()) {
+         ALOGE("%s: trying to configureStreams while there are still %zu inflight buffers!",
+                 __FUNCTION__, mInflightBuffers.size());
+@@ -1232,6 +1235,14 @@ Status CameraDeviceSession::processOneCaptureRequest(const CaptureRequest& reque
+ 
+         halRequest.num_output_buffers = numOutputBufs;
+         for (size_t i = 0; i < numOutputBufs; i++) {
++            if (mStreamMap[request.outputBuffers[i].streamId].format ==
++                    HAL_PIXEL_FORMAT_BLOB) {
++                if (!mCapturedBlob) {
++                    ALOGD("%s: BLOB capture seen, camera stack will be recycled on close",
++                            __FUNCTION__);
++                }
++                mCapturedBlob = true;
++            }
+             auto key = std::make_pair(request.outputBuffers[i].streamId, request.frameNumber);
+             auto& bufCache = mInflightBuffers[key] = camera3_stream_buffer_t{};
+             convertFromHidl(
+@@ -1320,6 +1331,22 @@ Return<void> CameraDeviceSession::close()  {
+         ATRACE_BEGIN("camera3->close");
+         mDevice->common.close(&mDevice->common);
+         ATRACE_END();
++        /* The mm-qcamera-daemon tears a session down asynchronously; if a new
++         * session is opened while the previous one is still being destroyed the
++         * HAL reports a serious device error (CameraErrorCallback error=1) and
++         * the camera app exits.  Give the daemon time to finish before the next
++         * open can happen. */
++        usleep(3000000);
++        if (mCapturedBlob) {
++            /* The 6.0.1 mm-qcamera-daemon leaks one ISP hw stream for every
++             * JPEG capture; once they run out the next camera session fails to
++             * link isp<->pproc and the camera app gets ERROR_DEVICE.  Ask init
++             * to recycle the camera stack in the background so the next open
++             * starts from a clean daemon. */
++            mCapturedBlob = false;
++            int rc = property_set("vendor.camera.stack_reset", "1");
++            ALOGD("%s: camera stack recycle requested rc=%d", __FUNCTION__, rc);
++        }
+ 
+         // free all imported buffers
+         Mutex::Autolock _l(mInflightLock);
+diff --git a/camera/device/3.2/default/CameraDeviceSession.h b/camera/device/3.2/default/CameraDeviceSession.h
+index a96c24506..09231ee1c 100644
+--- a/camera/device/3.2/default/CameraDeviceSession.h
++++ b/camera/device/3.2/default/CameraDeviceSession.h
+@@ -131,6 +131,10 @@ protected:
+     //    - init failed
+     //    - camera disconnected
+     bool mClosed = false;
++    // veyronltectc: set once a JPEG (BLOB) capture happened in this session;
++    // the 6.0.1 daemon leaks an ISP stream per capture, so the stack has to be
++    // recycled when such a session is closed.
++    bool mCapturedBlob = false;
+ 
+     // Set by CameraDevice (when external camera is disconnected)
+     bool mDisconnected = false;
+diff --git a/camera/device/3.2/default/convert.cpp b/camera/device/3.2/default/convert.cpp
+index 06ad7e963..5dc09fe5c 100644
+--- a/camera/device/3.2/default/convert.cpp
++++ b/camera/device/3.2/default/convert.cpp
+@@ -16,6 +16,11 @@
+ 
+ #define LOG_TAG "android.hardware.camera.device@3.2-convert-impl"
+ #include <log/log.h>
++#include <unistd.h>
++#include <mutex>
++#include <unordered_map>
++#include <fcntl.h>
++#include <sys/mman.h>
+ 
+ #include "include/convert.h"
+ 
+@@ -98,11 +103,87 @@ void convertToHidl(const camera3_stream_configuration_t& src, HalStreamConfigura
+     return;
+ }
+ 
++namespace {
++
++/*
++ * The wrapped 6.0.1 HAL was compiled against the Android 6 Qualcomm
++ * private_handle_t: [0] fd, [1] fd_metadata, [2] magic, [3] flags,
++ * [4] size, [5] offset, [6] bufferType, [7..8] base, [9] offset_metadata,
++ * [10..11] gpuaddr, [12] format, [13] width, [14] height, [15..] ...
++ *
++ * The Android 11 gralloc used here keeps the allocated width/height at
++ * [4]/[5] and the real buffer size at [10], so the HAL registers every buffer
++ * with "size = allocated width, offset = allocated height" and, for the JPEG
++ * path, reads a zero length and writes the blob header below the buffer
++ * (SIGSEGV in QCamera3PicChannel::jpegEvtHandle).  Hand the HAL a copy of the
++ * handle laid out the way it expects; fds are shared, memory is the same.
++ */
++struct LegacyHandleCache {
++    std::mutex lock;
++    std::unordered_map<const native_handle_t *, buffer_handle_t> map;
++};
++
++LegacyHandleCache gLegacyHandles;
++
++void clearCache() {
++    std::lock_guard<std::mutex> guard(gLegacyHandles.lock);
++    for (auto &entry : gLegacyHandles.map) {
++        native_handle_delete(const_cast<native_handle_t *>(entry.second));
++    }
++    gLegacyHandles.map.clear();
++}
++
++buffer_handle_t *toLegacyHandle(const native_handle_t *src, camera3_stream_t *stream) {
++    if (src == nullptr || src->numFds < 2 || src->numInts < 24) {
++        return nullptr;
++    }
++    std::lock_guard<std::mutex> guard(gLegacyHandles.lock);
++    auto it = gLegacyHandles.map.find(src);
++    if (it != gLegacyHandles.map.end()) {
++        /* A handle vector can be freed and reallocated at the same address
++         * (new camera session opened), in which case the cached copy points
++         * at a stale buffer.  Only reuse it if the fd still matches. */
++        const native_handle_t *cached = it->second;
++        if (cached != nullptr && cached->data[0] == src->data[0]) {
++            return const_cast<buffer_handle_t *>(&it->second);
++        }
++        native_handle_delete(const_cast<native_handle_t *>(it->second));
++        gLegacyHandles.map.erase(it);
++    }
++    native_handle_t *h = native_handle_create(2, 21);
++    if (h == nullptr) {
++        return nullptr;
++    }
++    memset(h->data, 0, sizeof(int) * (2 + 21));
++    int size = src->data[10];
++    h->data[0] = src->data[0];          // fd
++    h->data[1] = src->data[1];          // fd_metadata
++    h->data[2] = src->data[2];          // magic
++    h->data[3] = src->data[3];          // flags
++    h->data[4] = size;                  // size
++    h->data[5] = 0;                     // offset
++    h->data[6] = 0;                     // bufferType
++    h->data[12] = stream->format;       // format
++    h->data[13] = src->data[6];         // width
++    h->data[14] = size;                 // jpeg length the HAL clamps to the size
++    ALOGD("%s: legacy handle fd=%d size=%d %dx%d format=0x%x", __FUNCTION__,
++            h->data[0], h->data[4], h->data[13], h->data[14], h->data[12]);
++    auto res = gLegacyHandles.map.emplace(src, buffer_handle_t(h));
++    return const_cast<buffer_handle_t *>(&res.first->second);
++}
++
++}  // namespace
++
++void clearLegacyHandles() {
++    clearCache();
++}
++
+ void convertFromHidl(
+         buffer_handle_t* bufPtr, BufferStatus status, camera3_stream_t* stream, int acquireFence,
+         camera3_stream_buffer_t* dst) {
+     dst->stream = stream;
+-    dst->buffer = bufPtr;
++    buffer_handle_t *legacy = toLegacyHandle(*bufPtr, stream);
++    dst->buffer = (legacy != nullptr) ? legacy : bufPtr;
+     dst->status = (int) status;
+     dst->acquire_fence = acquireFence;
+     dst->release_fence = -1; // meant for HAL to fill in
+diff --git a/camera/device/3.2/default/include/convert.h b/camera/device/3.2/default/include/convert.h
+index 96891f091..dc915d399 100644
+--- a/camera/device/3.2/default/include/convert.h
++++ b/camera/device/3.2/default/include/convert.h
+@@ -40,6 +40,9 @@ struct Camera3Stream : public camera3_stream {
+ 
+ // *dst will point to the data owned by src, but src still owns the data after this call returns.
+ bool convertFromHidl(const CameraMetadata &src, const camera_metadata_t** dst);
++
++/* Drop the cached Android-6 private_handle_t copies (new camera session). */
++void clearLegacyHandles();
+ void convertToHidl(const camera_metadata_t* src, CameraMetadata* dst);
+ 
+ void convertFromHidl(const Stream &src, Camera3Stream* dst);
