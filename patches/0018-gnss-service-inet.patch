@@ -1,0 +1,10 @@
+diff --git a/gnss/1.0/default/android.hardware.gnss@1.0-service.rc b/gnss/1.0/default/android.hardware.gnss@1.0-service.rc
+index 1300d81f0..478761196 100644
+--- a/gnss/1.0/default/android.hardware.gnss@1.0-service.rc
++++ b/gnss/1.0/default/android.hardware.gnss@1.0-service.rc
+@@ -2,4 +2,4 @@ service vendor.gnss_service /vendor/bin/hw/android.hardware.gnss@1.0-service
+     interface android.hardware.gnss@1.0::IGnss default
+     class hal
+     user gps
+-    group system gps radio
++    group system gps radio inet

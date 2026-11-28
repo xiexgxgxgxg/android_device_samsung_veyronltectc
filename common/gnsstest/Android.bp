@@ -1,0 +1,13 @@
+// GNSS end-to-end test client (not installed in the product image by default;
+// build with "m gnsstest" and push to /system/bin when checking the HAL).
+cc_binary {
+    name: "gnsstest",
+    srcs: ["gnsstest.cpp"],
+    shared_libs: [
+        "android.hardware.gnss@1.0",
+        "libhidlbase",
+        "liblog",
+        "libutils",
+    ],
+    cflags: ["-Wall", "-Wno-unused-parameter"],
+}

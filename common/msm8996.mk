@@ -538,3 +538,14 @@ PRODUCT_COPY_FILES += \
     $(LOCAL_PATH)/prebuilt/lpm/media/wireless_C4_afc.spi:$(TARGET_COPY_OUT_SYSTEM)/media/wireless_C4_afc.spi
 
 PRODUCT_PACKAGES += liblpmcompat
+
+# Location / GNSS configuration (stock 6.0.1 /vendor/etc).  The legacy loc_eng
+# HAL reads these from /vendor/etc; without them XTRA/SUPL/izat settings fall
+# back to defaults and A-GPS assistance is not configured.
+PRODUCT_COPY_FILES += \
+    $(LOCAL_PATH)/prebuilt/etc/loc/gps.conf:$(TARGET_COPY_OUT_VENDOR)/etc/gps.conf \
+    $(LOCAL_PATH)/prebuilt/etc/loc/flp.conf:$(TARGET_COPY_OUT_VENDOR)/etc/flp.conf \
+    $(LOCAL_PATH)/prebuilt/etc/loc/izat.conf:$(TARGET_COPY_OUT_VENDOR)/etc/izat.conf \
+    $(LOCAL_PATH)/prebuilt/etc/loc/sap.conf:$(TARGET_COPY_OUT_VENDOR)/etc/sap.conf \
+    $(LOCAL_PATH)/prebuilt/etc/loc/sapa_feature.xml:$(TARGET_COPY_OUT_VENDOR)/etc/sapa_feature.xml \
+    $(LOCAL_PATH)/prebuilt/etc/loc/plb_net_adaptation_config.xml:$(TARGET_COPY_OUT_VENDOR)/etc/plb_net_adaptation_config.xml
