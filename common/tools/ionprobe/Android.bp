@@ -1,0 +1,15 @@
+cc_binary {
+    name: "ionprobe32",
+    srcs: ["ionprobe.c"],
+    vendor: true,
+    compile_multilib: "32",
+    cflags: ["-Wno-unused-parameter"],
+}
+
+cc_binary {
+    name: "ionprobe64",
+    srcs: ["ionprobe.c"],
+    vendor: true,
+    compile_multilib: "64",
+    cflags: ["-Wno-unused-parameter"],
+}
