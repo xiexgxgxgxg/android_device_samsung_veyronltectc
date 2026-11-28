@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<permissions>
+    <privapp-permissions package="com.baidu.map.location">
+        <permission name="android.permission.INSTALL_LOCATION_PROVIDER"/>
+        <permission name="android.permission.INTERACT_ACROSS_USERS"/>
+        <permission name="android.permission.WRITE_SECURE_SETTINGS"/>
+        <permission name="android.permission.MOUNT_UNMOUNT_FILESYSTEMS"/>
+        <permission name="android.permission.READ_LOGS"/>
+        <permission name="android.permission.WRITE_APN_SETTINGS"/>
+        <permission name="android.permission.UPDATE_DEVICE_STATS"/>
+    </privapp-permissions>
+</permissions>

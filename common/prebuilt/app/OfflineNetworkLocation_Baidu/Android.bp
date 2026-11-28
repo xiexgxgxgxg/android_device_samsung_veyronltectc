@@ -1,0 +1,12 @@
+// Stock Samsung/Baidu offline network location provider (NLP).
+// Signed with Baidu's key: keep the original signature, the Baidu SDK checks it
+// against the API key shipped in the APK.
+android_app_import {
+    name: "OfflineNetworkLocation_Baidu",
+    apk: "OfflineNetworkLocation_Baidu.apk",
+    privileged: true,
+    presigned: true,
+    dex_preopt: {
+        enabled: false,
+    },
+}

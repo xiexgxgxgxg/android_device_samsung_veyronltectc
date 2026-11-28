@@ -1,0 +1,9 @@
+// Location request test app: requests NETWORK + GPS updates and logs them.
+android_app {
+    name: "LocTest",
+    srcs: ["src/**/*.java"],
+    manifest: "AndroidManifest.xml",
+    platform_apis: true,
+    certificate: "platform",
+    privileged: true,
+}

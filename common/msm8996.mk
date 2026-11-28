@@ -549,3 +549,15 @@ PRODUCT_COPY_FILES += \
     $(LOCAL_PATH)/prebuilt/etc/loc/sap.conf:$(TARGET_COPY_OUT_VENDOR)/etc/sap.conf \
     $(LOCAL_PATH)/prebuilt/etc/loc/sapa_feature.xml:$(TARGET_COPY_OUT_VENDOR)/etc/sapa_feature.xml \
     $(LOCAL_PATH)/prebuilt/etc/loc/plb_net_adaptation_config.xml:$(TARGET_COPY_OUT_VENDOR)/etc/plb_net_adaptation_config.xml
+
+# Offline network location provider (NLP) from the stock ROM.  Without it the
+# AOSP build has no network provider at all, so indoor/cell-based location does
+# not work (GNSS needs a sky view).  The APK is a 6.0.1 priv-app: it needs the
+# INSTALL_LOCATION_PROVIDER whitelist entry, and its runtime permissions have to
+# be granted at first boot through default-permissions (its Baidu SDK refuses to
+# locate without READ_PHONE_STATE + storage + fine/coarse location).
+PRODUCT_PACKAGES += OfflineNetworkLocation_Baidu
+
+PRODUCT_COPY_FILES += \
+    $(LOCAL_PATH)/prebuilt/etc/permissions/privapp-permissions-baidu-nlp.xml:$(TARGET_COPY_OUT_SYSTEM)/etc/permissions/privapp-permissions-baidu-nlp.xml \
+    $(LOCAL_PATH)/prebuilt/etc/default-permissions/baidu-nlp.xml:$(TARGET_COPY_OUT_SYSTEM)/etc/default-permissions/baidu-nlp.xml
