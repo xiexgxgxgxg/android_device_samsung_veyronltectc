@@ -1,0 +1,81 @@
+From f1e3e7f71f6dd2266d071573fc0c97d0e2ae5199 Mon Sep 17 00:00:00 2001
+From: xiexgxgxgxg <xiangtaozichidexie@gmail.com>
+Date: Thu, 19 Nov 2026 19:08:02 +0800
+Subject: [PATCH] libui: don't block on absent gralloc mapper 4.x/3.x
+
+The vendor is the 6.0.1 gralloc stack and only registers mapper 2.0.
+Gralloc4Mapper's IMapper::getService() waits/sleeps for the missing
+android.hardware.graphics.mapper@4.0 service (about 4s) on the first
+GraphicBuffer of the first process after boot; the render thread holds
+the first frame in dequeueBuffer until then, so Settings shows a white
+window for ~4.5s even though its preferences are ready in 0.25s.
+
+Use tryGetService() for 4.x and 3.x so an absent service fails
+immediately and the fallback to 2.0 is used.  Same for the 4.x/3.x
+allocator lookup.
+
+Change-Id: Ibf0e1f234567890abcdef1234567890abcdef
+---
+ libs/ui/Gralloc3.cpp | 10 ++++++++--
+ libs/ui/Gralloc4.cpp | 10 ++++++++--
+ 2 files changed, 16 insertions(+), 4 deletions(-)
+
+diff --git a/libs/ui/Gralloc3.cpp b/libs/ui/Gralloc3.cpp
+index 4a8a4d09d..c37469475 100644
+--- a/libs/ui/Gralloc3.cpp
++++ b/libs/ui/Gralloc3.cpp
+@@ -85,7 +85,12 @@ void Gralloc3Mapper::preload() {
+ }
+ 
+ Gralloc3Mapper::Gralloc3Mapper() {
+-    mMapper = IMapper::getService();
++    // Do not block waiting for a higher mapper version that this vendor
++    // does not provide: the blocking getService() sleeps/retries for ~4s
++    // on the first GraphicBuffer of every process, delaying the first
++    // frame (Settings shows a white window until then).  Fall through to
++    // the version the vendor actually registers (2.0 on this device).
++    mMapper = IMapper::tryGetService();
+     if (mMapper == nullptr) {
+         ALOGW("mapper 3.x is not supported");
+         return;
+@@ -348,7 +353,8 @@ status_t Gralloc3Mapper::isSupported(uint32_t width, uint32_t height, android::P
+ }
+ 
+ Gralloc3Allocator::Gralloc3Allocator(const Gralloc3Mapper& mapper) : mMapper(mapper) {
+-    mAllocator = IAllocator::getService();
++    // The vendor only registers allocator 2.0; don't block on 4.0/3.0.
++    mAllocator = IAllocator::tryGetService();
+     if (mAllocator == nullptr) {
+         ALOGW("allocator 3.x is not supported");
+         return;
+diff --git a/libs/ui/Gralloc4.cpp b/libs/ui/Gralloc4.cpp
+index b08241fce..6d1ebf150 100644
+--- a/libs/ui/Gralloc4.cpp
++++ b/libs/ui/Gralloc4.cpp
+@@ -94,7 +94,12 @@ void Gralloc4Mapper::preload() {
+ }
+ 
+ Gralloc4Mapper::Gralloc4Mapper() {
+-    mMapper = IMapper::getService();
++    // Do not block waiting for a higher mapper version that this vendor
++    // does not provide: the blocking getService() sleeps/retries for ~4s
++    // on the first GraphicBuffer of every process, delaying the first
++    // frame (Settings shows a white window until then).  Fall through to
++    // the version the vendor actually registers (2.0 on this device).
++    mMapper = IMapper::tryGetService();
+     if (mMapper == nullptr) {
+         ALOGI("mapper 4.x is not supported");
+         return;
+@@ -1057,7 +1062,8 @@ std::string Gralloc4Mapper::dumpBuffers(bool less) const {
+ }
+ 
+ Gralloc4Allocator::Gralloc4Allocator(const Gralloc4Mapper& mapper) : mMapper(mapper) {
+-    mAllocator = IAllocator::getService();
++    // The vendor only registers allocator 2.0; don't block on 4.0/3.0.
++    mAllocator = IAllocator::tryGetService();
+     if (mAllocator == nullptr) {
+         ALOGW("allocator 3.x is not supported");
+         return;
+-- 
+2.53.0
+

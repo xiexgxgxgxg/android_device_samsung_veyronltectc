@@ -1,0 +1,125 @@
+From f448b278d8ce837cf8bab21458aa5eb4e44e3b42 Mon Sep 17 00:00:00 2001
+From: xiexgxgxgxg <xiangtaozichidexie@gmail.com>
+Date: Thu, 19 Nov 2026 16:02:52 +0800
+Subject: [PATCH] lights: cache and pre-warm the ILight proxy in
+ setLight_native
+
+ILight::getService() was called on every brightness change.  On this
+device the HIDL lookup takes about one second (strace shows
+nanosleep({1s}) on the PhotonicModulator thread, and the JNI logs
+"Excessive delay setting light"), so every slider step was delayed by a
+second and updates queued up behind each other.
+
+Cache the proxy, pre-warm it from LightsService's constructor, and
+re-fetch it only after a failed call (for example a restarted HAL).
+
+Change-Id: I2c3d4e5f60718293a4b5c6d7e8f9012345678901
+---
+ .../android/server/lights/LightsService.java  |  9 ++++
+ ...om_android_server_lights_LightsService.cpp | 43 ++++++++++++++++---
+ 2 files changed, 47 insertions(+), 5 deletions(-)
+
+diff --git a/services/core/java/com/android/server/lights/LightsService.java b/services/core/java/com/android/server/lights/LightsService.java
+index f712e8de353..102c1645b69 100644
+--- a/services/core/java/com/android/server/lights/LightsService.java
++++ b/services/core/java/com/android/server/lights/LightsService.java
+@@ -495,6 +495,12 @@ public class LightsService extends SystemService {
+         mH = new Handler(looper);
+         mVintfLights = service.get() != null ? service : null;
+ 
++        if (mVintfLights == null) {
++            // The first HIDL lookup can take ~1s on this device; do it now
++            // instead of during the user's first brightness change.
++            init_native();
++        }
++
+         populateAvailableLights(context);
+         mManagerService = new LightsManagerBinderService();
+     }
+@@ -592,4 +598,7 @@ public class LightsService extends SystemService {
+ 
+     static native void setLight_native(int light, int color, int mode,
+             int onMS, int offMS, int brightnessMode, int brightnessLevel);
++
++    /* Pre-warm the HIDL light HAL proxy; see the JNI implementation. */
++    static native void init_native();
+ }
+diff --git a/services/core/jni/com_android_server_lights_LightsService.cpp b/services/core/jni/com_android_server_lights_LightsService.cpp
+index 35d8219651d..cefae151578 100644
+--- a/services/core/jni/com_android_server_lights_LightsService.cpp
++++ b/services/core/jni/com_android_server_lights_LightsService.cpp
+@@ -27,6 +27,7 @@
+ #include <utils/misc.h>
+ #include <utils/Log.h>
+ #include <map>
++#include <mutex>
+ #include <stdio.h>
+ 
+ namespace android {
+@@ -42,6 +43,21 @@ using Return     = ::android::hardware::Return<T>;
+ 
+ static bool sLightSupported = true;
+ 
++static std::mutex gLightLock;
++static sp<ILight> gLightHal;
++
++/*
++ * Pre-warm the HIDL proxy while LightsService is initialised.  The first
++ * ILight::getService() on this device takes about a second; doing it here
++ * keeps that delay out of the user's first brightness change.
++ */
++static void init_native(JNIEnv* /* env */, jobject /* clazz */) {
++    std::lock_guard<std::mutex> lock(gLightLock);
++    if (gLightHal == nullptr) {
++        gLightHal = ILight::getService();
++    }
++}
++
+ static bool validate(jint light, jint flash, jint brightness) {
+     bool valid = true;
+ 
+@@ -158,12 +174,28 @@ static void setLight_native(
+ 
+     {
+         android::base::Timer t;
+-        sp<ILight> hal = ILight::getService();
+-        if (hal == nullptr) {
+-            sLightSupported = false;
+-            return;
++        /*
++         * Cache the ILight proxy.  ILight::getService() asks
++         * hwservicemanager on every call, and on this build that lookup
++         * takes about one second (it is the source of the "Excessive delay
++         * setting light" warning).  Because the backlight change is
++         * synchronous on the display thread, every slider step was delayed
++         * by that second and updates queued up behind each other.
++         *
++         * Re-fetch only after a failed call so a restarted HAL is picked up.
++         */
++        std::lock_guard<std::mutex> lock(gLightLock);
++        if (gLightHal == nullptr) {
++            gLightHal = ILight::getService();
++            if (gLightHal == nullptr) {
++                sLightSupported = false;
++                return;
++            }
++        }
++        Return<Status> ret = gLightHal->setLight(type, state);
++        if (!ret.isOk()) {
++            gLightHal = nullptr;
+         }
+-        Return<Status> ret = hal->setLight(type, state);
+         processReturn(ret, type, state);
+         if (t.duration() > 50ms) ALOGD("Excessive delay setting light");
+     }
+@@ -171,6 +203,7 @@ static void setLight_native(
+ 
+ static const JNINativeMethod method_table[] = {
+     { "setLight_native", "(IIIIIII)V", (void*)setLight_native },
++    { "init_native", "()V", (void*)init_native },
+ };
+ 
+ int register_android_server_LightsService(JNIEnv *env) {
+-- 
+2.53.0
+

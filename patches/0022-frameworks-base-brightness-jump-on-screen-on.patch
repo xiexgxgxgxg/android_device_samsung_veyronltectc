@@ -1,0 +1,38 @@
+From 22a4832d2cd1fe8b4eb7e63878cbf8a54966696f Mon Sep 17 00:00:00 2001
+From: xiexgxgxgxg <xiangtaozichidexie@gmail.com>
+Date: Thu, 19 Nov 2026 13:23:09 +0800
+Subject: [PATCH] display: jump to the target brightness when the screen turns
+ on
+
+The AOSP ramp animates the backlight from 0 to the target on every screen
+on.  On the W2017 each step is a synchronous DSI transfer, so the panel
+visibly starts at the lowest level and the wake takes over a second longer.
+Skip the ramp when the screen turns on.
+
+Change-Id: Ic305e7c9c7a2047932120b16d06a16cf9a49ce50
+---
+ .../android/server/display/DisplayPowerController.java    | 8 ++++++--
+ 1 file changed, 6 insertions(+), 2 deletions(-)
+
+diff --git a/services/core/java/com/android/server/display/DisplayPowerController.java b/services/core/java/com/android/server/display/DisplayPowerController.java
+index f77f0e302aa..6fb7cd8173b 100644
+--- a/services/core/java/com/android/server/display/DisplayPowerController.java
++++ b/services/core/java/com/android/server/display/DisplayPowerController.java
+@@ -1111,8 +1111,12 @@ final class DisplayPowerController implements AutomaticBrightnessController.Call
+ 
+             final boolean wasOrWillBeInVr =
+                     (state == Display.STATE_VR || oldState == Display.STATE_VR);
+-            final boolean initialRampSkip =
+-                    state == Display.STATE_ON && mSkipRampState != RAMP_STATE_SKIP_NONE;
++            // W2017: every brightness change is a synchronous DSI transfer
++            // (mdss_samsung_brightness_dcs), and the AOSP ramp animates from 0
++            // to the target on every screen on: that is what makes the panel
++            // flash at the lowest level and delays the wake.  Jump straight to
++            // the target brightness when the screen turns on.
++            final boolean initialRampSkip = state == Display.STATE_ON;
+             // While dozing, sometimes the brightness is split into buckets. Rather than animating
+             // through the buckets, which is unlikely to be smooth in the first place, just jump
+             // right to the suggested brightness.
+-- 
+2.53.0
+

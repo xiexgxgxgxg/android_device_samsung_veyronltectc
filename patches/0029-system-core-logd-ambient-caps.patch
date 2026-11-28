@@ -1,0 +1,50 @@
+From e7509a006a2c6e4e705e37e0bdde6666c3cdb79a Mon Sep 17 00:00:00 2001
+From: xiexgxgxgxg <xiangtaozichidexie@gmail.com>
+Date: Wed, 18 Nov 2026 20:28:18 +0800
+Subject: [PATCH] logd: keep running when the kernel has no ambient
+ capabilities
+
+On this 3.18 kernel init drops the "capabilities" line of logd.rc
+("capabilities requested but the kernel does not support ambient
+capabilities"), so logd is started as uid logd without CAP_SYSLOG and
+CAP_AUDIT_CONTROL, and its own cap_set_proc() to the target set fails with
+EPERM:
+
+  logd: failed to set CAP_SYSLOG or CAP_AUDIT_CONTROL (1)
+
+which made logd exit immediately and took userspace logging (and with it
+every HWC/SF log line) down with it.
+
+Keep logd alive without those capabilities instead: userspace logging keeps
+working, the kernel buffer is still reachable via dmesg, and the W2017
+device tree disables ro.logd.kernel/ro.logd.auditd so no thread tries to
+open /dev/kmsg or the audit netlink socket.
+
+Change-Id: Ifabf6c5b128108807dc024421eed4118106160aa
+---
+ logd/main.cpp | 9 +++++++--
+ 1 file changed, 7 insertions(+), 2 deletions(-)
+
+diff --git a/logd/main.cpp b/logd/main.cpp
+index acf9a071f..ff5e06983 100644
+--- a/logd/main.cpp
++++ b/logd/main.cpp
+@@ -103,8 +103,13 @@ static int DropPrivs(bool klogd, bool auditd) {
+         }
+     }
+     if (cap_set_proc(caps.get()) < 0) {
+-        android::prdebug("failed to set CAP_SYSLOG or CAP_AUDIT_CONTROL (%d)", errno);
+-        return -1;
++        // This kernel (3.18) has no PR_CAP_AMBIENT, so init cannot hand these
++        // capabilities to a non-root uid and dropping to the target set fails
++        // with EPERM.  Keep logd alive without them: userspace logging is what
++        // the device needs, and the kernel buffer stays reachable via dmesg.
++        android::prdebug("failed to set CAP_SYSLOG or CAP_AUDIT_CONTROL (%d), "
++                         "continuing without kernel/audit logging", errno);
++        return 0;
+     }
+ 
+     return 0;
+-- 
+2.53.0
+

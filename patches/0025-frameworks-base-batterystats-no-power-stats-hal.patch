@@ -1,0 +1,61 @@
+From 923616a2b50c710cbcafccf8ef2cbece5b3b50f5 Mon Sep 17 00:00:00 2001
+From: xiexgxgxgxg <xiangtaozichidexie@gmail.com>
+Date: Thu, 19 Nov 2026 16:47:51 +0800
+Subject: [PATCH] batterystats: do not block on the optional power stats HAL
+
+setUpPowerStatsLocked() used getService(), which blocks waiting for a
+lazy HIDL service.  This port has neither power.stats nor the legacy
+power HAL, so every call spent about two seconds timing out while
+BatteryStatsImpl's lock was held.  noteScreenState()/noteInteractive()
+on the power key path wait for the same lock, so screen off could take
+2-4 seconds.
+
+Use the non-blocking tryGetService() and remember the result; the
+optional power stats must never block battery stats or the power key.
+
+Change-Id: I3d4e5f60718293a4b5c6d7e8f90123456789012
+---
+ ..._android_server_am_BatteryStatsService.cpp | 20 +++++++++++++++++--
+ 1 file changed, 18 insertions(+), 2 deletions(-)
+
+diff --git a/services/core/jni/com_android_server_am_BatteryStatsService.cpp b/services/core/jni/com_android_server_am_BatteryStatsService.cpp
+index b08868e2c7f..d3c8f2a8bde 100644
+--- a/services/core/jni/com_android_server_am_BatteryStatsService.cpp
++++ b/services/core/jni/com_android_server_am_BatteryStatsService.cpp
+@@ -831,15 +831,31 @@ static jint getPowerHalSubsystemData(JNIEnv* env, jobject outBuf) {
+ }
+ 
+ static void setUpPowerStatsLocked() {
++    /*
++     * This is called from updateRpmStatsLocked() while BatteryStatsImpl's
++     * lock (mStats) is held, and from the screen-on/off path.  getService()
++     * blocks waiting for a lazy HIDL service; on this port neither
++     * power.stats nor the legacy power HAL is registered, so every call
++     * spent ~2s timing out with mStats held and delayed screen on/off.
++     *
++     * Use the non-blocking lookup and remember the result: the optional
++     * power stats must never block battery stats or the power key path.
++     */
++    static bool sPowerStatsChecked = false;
++    if (sPowerStatsChecked) {
++        return;
++    }
++    sPowerStatsChecked = true;
++
+     // First see if power.stats HAL is available. Fall back to power HAL if
+     // power.stats HAL is unavailable.
+-    if (android::hardware::power::stats::V1_0::IPowerStats::getService() != nullptr) {
++    if (android::hardware::power::stats::V1_0::IPowerStats::tryGetService() != nullptr) {
+         ALOGI("Using power.stats HAL");
+         gGetLowPowerStatsImpl = getPowerStatsHalLowPowerData;
+         gGetPlatformLowPowerStatsImpl = getPowerStatsHalPlatformData;
+         gGetSubsystemLowPowerStatsImpl = getPowerStatsHalSubsystemData;
+         gGetRailEnergyPowerStatsImpl = getPowerStatsHalRailEnergyData;
+-    } else if (android::hardware::power::V1_0::IPower::getService() != nullptr) {
++    } else if (android::hardware::power::V1_0::IPower::tryGetService() != nullptr) {
+         ALOGI("Using power HAL");
+         gGetLowPowerStatsImpl = getPowerHalLowPowerData;
+         gGetPlatformLowPowerStatsImpl = getPowerHalPlatformData;
+-- 
+2.53.0
+

@@ -1,0 +1,28 @@
+From ad63640f1484ff1542373c31c87045486e0d35c8 Mon Sep 17 00:00:00 2001
+From: xiexgxgxgxg <xiangtaozichidexie@gmail.com>
+Date: Sat, 28 Nov 2026 16:44:57 +0800
+Subject: [PATCH] cameraserver: preload the 6.0.1 camera HAL shims
+
+The Samsung 6.0.1 camera HAL expects the legacy camera_metadata and
+camera parameter APIs, which the shim libraries in the device tree
+provide.  Without them cameraserver talks to the HAL with the wrong
+structures and no camera can be opened.
+
+Change-Id: I026fdd0be199c6e088922341a5707b2a60624f60
+---
+ camera/cameraserver/cameraserver.rc | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/camera/cameraserver/cameraserver.rc b/camera/cameraserver/cameraserver.rc
+index 8f51458d7f..1e1b19692e 100644
+--- a/camera/cameraserver/cameraserver.rc
++++ b/camera/cameraserver/cameraserver.rc
+@@ -1,4 +1,5 @@
+ service cameraserver /system/bin/cameraserver
++    setenv LD_PRELOAD "/system/lib/libcamparams_shim_sys.so /system/lib/libcammetadata_legacy_sys.so"
+     class main
+     user cameraserver
+     group audio camera input drmrpc
+-- 
+2.53.0
+

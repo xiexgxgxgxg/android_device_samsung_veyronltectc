@@ -1,0 +1,66 @@
+From e2d1feebedec4ea8b88d8466c0aa2bc7932a2824 Mon Sep 17 00:00:00 2001
+From: xiexgxgxgxg <xiangtaozichidexie@gmail.com>
+Date: Thu, 19 Nov 2026 11:08:10 +0800
+Subject: [PATCH] policy: let the hangup key power the screen on the W2017
+
+The W2017 hangup key (KEY_SWITCHVIDEOMODE from qpnp_pon, mapped to ENDCALL)
+must end a call when there is one, and otherwise turn the screen off/on
+like the power key.
+
+AOSP already blanks the screen on ENDCALL when END_BUTTON_BEHAVIOR_SLEEP is
+configured, but never wakes it, so with the default behaviour the key did
+nothing at all.  Make the key always blank the screen when there is no call
+to end, and wake it (wakeUpFromPowerKey) when the screen is already off.
+
+Change-Id: Ie8bf16aa8d7ed4e693a6900d0264b95cf1809201
+---
+ .../server/policy/PhoneWindowManager.java     | 26 ++++++++++---------
+ 1 file changed, 14 insertions(+), 12 deletions(-)
+
+diff --git a/services/core/java/com/android/server/policy/PhoneWindowManager.java b/services/core/java/com/android/server/policy/PhoneWindowManager.java
+index 28724e2ebe9..61a338fdfa8 100644
+--- a/services/core/java/com/android/server/policy/PhoneWindowManager.java
++++ b/services/core/java/com/android/server/policy/PhoneWindowManager.java
+@@ -4487,6 +4487,15 @@ public class PhoneWindowManager implements WindowManagerPolicy {
+             case KeyEvent.KEYCODE_ENDCALL: {
+                 result &= ~ACTION_PASS_TO_USER;
+                 if (down) {
++                    // W2017: the hangup key doubles as a power key.  When the
++                    // screen is off, wake it instead of ending a call (there
++                    // cannot be an ongoing call the user can see).
++                    if (!interactive) {
++                        wakeUpFromPowerKey(event.getEventTime());
++                        isWakeKey = true;
++                        mEndCallKeyHandled = true;
++                        break;
++                    }
+                     TelecomManager telecomManager = getTelecommService();
+                     boolean hungUp = false;
+                     if (telecomManager != null) {
+@@ -4503,18 +4512,11 @@ public class PhoneWindowManager implements WindowManagerPolicy {
+                     if (!mEndCallKeyHandled) {
+                         mHandler.removeCallbacks(mEndCallLongPress);
+                         if (!canceled) {
+-                            if ((mEndcallBehavior
+-                                    & Settings.System.END_BUTTON_BEHAVIOR_HOME) != 0) {
+-                                if (goHome()) {
+-                                    break;
+-                                }
+-                            }
+-                            if ((mEndcallBehavior
+-                                    & Settings.System.END_BUTTON_BEHAVIOR_SLEEP) != 0) {
+-                                goToSleep(event.getEventTime(),
+-                                        PowerManager.GO_TO_SLEEP_REASON_POWER_BUTTON, 0);
+-                                isWakeKey = false;
+-                            }
++                            // W2017: when there is no call to end the hangup key
++                            // behaves like the power key and blanks the screen.
++                            goToSleep(event.getEventTime(),
++                                    PowerManager.GO_TO_SLEEP_REASON_POWER_BUTTON, 0);
++                            isWakeKey = false;
+                         }
+                     }
+                 }
+-- 
+2.53.0
+

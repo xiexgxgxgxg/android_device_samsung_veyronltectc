@@ -1,0 +1,80 @@
+From e9b515c3a205fb3f91f3f0ebaa0a0609f5b41920 Mon Sep 17 00:00:00 2001
+From: xiexgxgxgxg <xiangtaozichidexie@gmail.com>
+Date: Thu, 19 Nov 2026 19:31:59 +0800
+Subject: [PATCH] libui: prefer the vendor's gralloc 2.0 mapper/allocator
+
+The vendor registers gralloc mapper/allocator 2.0 only.  Trying 4.0/3.0
+first with tryGetService() still ended in getRawServiceInternal's
+nanosleep on the first buffer after boot; Settings' first frame stayed
+white for ~4s even after the tryGetService change.  On this device the
+2.0 service is already registered, so try 2.0 first and keep 3.x/4.x as
+fallbacks.  drop_caches cold start: 426-587ms (was 4.6s).
+
+Change-Id: Icf1e1f234567890abcdef1234567890abcdef
+---
+ libs/ui/GraphicBufferAllocator.cpp |  9 +++++----
+ libs/ui/GraphicBufferMapper.cpp    | 12 ++++++++----
+ 2 files changed, 13 insertions(+), 8 deletions(-)
+
+diff --git a/libs/ui/GraphicBufferAllocator.cpp b/libs/ui/GraphicBufferAllocator.cpp
+index 943d13ec6..83f471285 100644
+--- a/libs/ui/GraphicBufferAllocator.cpp
++++ b/libs/ui/GraphicBufferAllocator.cpp
+@@ -48,8 +48,9 @@ KeyedVector<buffer_handle_t,
+     GraphicBufferAllocator::alloc_rec_t> GraphicBufferAllocator::sAllocList;
+ 
+ GraphicBufferAllocator::GraphicBufferAllocator() : mMapper(GraphicBufferMapper::getInstance()) {
+-    mAllocator = std::make_unique<const Gralloc4Allocator>(
+-            reinterpret_cast<const Gralloc4Mapper&>(mMapper.getGrallocMapper()));
++    // Match the mapper preference order: this vendor provides 2.0.
++    mAllocator = std::make_unique<const Gralloc2Allocator>(
++            reinterpret_cast<const Gralloc2Mapper&>(mMapper.getGrallocMapper()));
+     if (mAllocator->isLoaded()) {
+         return;
+     }
+@@ -58,8 +59,8 @@ GraphicBufferAllocator::GraphicBufferAllocator() : mMapper(GraphicBufferMapper::
+     if (mAllocator->isLoaded()) {
+         return;
+     }
+-    mAllocator = std::make_unique<const Gralloc2Allocator>(
+-            reinterpret_cast<const Gralloc2Mapper&>(mMapper.getGrallocMapper()));
++    mAllocator = std::make_unique<const Gralloc4Allocator>(
++            reinterpret_cast<const Gralloc4Mapper&>(mMapper.getGrallocMapper()));
+     if (mAllocator->isLoaded()) {
+         return;
+     }
+diff --git a/libs/ui/GraphicBufferMapper.cpp b/libs/ui/GraphicBufferMapper.cpp
+index d20bd7a89..61ccd4ec3 100644
+--- a/libs/ui/GraphicBufferMapper.cpp
++++ b/libs/ui/GraphicBufferMapper.cpp
+@@ -52,9 +52,13 @@ void GraphicBufferMapper::preloadHal() {
+ }
+ 
+ GraphicBufferMapper::GraphicBufferMapper() {
+-    mMapper = std::make_unique<const Gralloc4Mapper>();
++    // This vendor registers gralloc/mapper 2.0 only.  Trying 4.x/3.x first
++    // costs seconds in the HIDL getService wait on the first buffer after
++    // boot (the Settings white-screen delay).  Prefer the version the vendor
++    // actually provides; fall back to higher versions only if needed.
++    mMapper = std::make_unique<const Gralloc2Mapper>();
+     if (mMapper->isLoaded()) {
+-        mMapperVersion = Version::GRALLOC_4;
++        mMapperVersion = Version::GRALLOC_2;
+         return;
+     }
+     mMapper = std::make_unique<const Gralloc3Mapper>();
+@@ -62,9 +66,9 @@ GraphicBufferMapper::GraphicBufferMapper() {
+         mMapperVersion = Version::GRALLOC_3;
+         return;
+     }
+-    mMapper = std::make_unique<const Gralloc2Mapper>();
++    mMapper = std::make_unique<const Gralloc4Mapper>();
+     if (mMapper->isLoaded()) {
+-        mMapperVersion = Version::GRALLOC_2;
++        mMapperVersion = Version::GRALLOC_4;
+         return;
+     }
+ 
+-- 
+2.53.0
+

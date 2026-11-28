@@ -1,0 +1,59 @@
+From 0e3f90356aa84faf0f68c08d973c183a8ca866f8 Mon Sep 17 00:00:00 2001
+From: xiexgxgxgxg <xiangtaozichidexie@gmail.com>
+Date: Thu, 19 Nov 2026 14:46:57 +0800
+Subject: [PATCH] display: do not create automatic brightness without a light
+ sensor
+
+When the sensors HAL enumerates no light sensor, findDisplayLightSensor()
+returns null but DisplayPowerController still creates an
+AutomaticBrightnessController with that null sensor.  The controller
+stays in the sensor-enabled-no-lux state forever, keeps fighting the
+user's slider value and makes every updatePowerState() call do useless
+work (the W2017 currently has no working sensor HAL at all).
+
+Only create the controller when a light sensor exists, and clear
+mUseSoftwareAutoBrightnessConfig otherwise.  No permanent feature flag:
+once the sensor shows up again the controller is created as usual.
+
+Change-Id: I9f4d5b6c7e8a90b1c2d3e4f5a6b7c8d9e0f1a2b3
+---
+ .../server/display/DisplayPowerController.java   | 16 +++++++++++++++-
+ 1 file changed, 15 insertions(+), 1 deletion(-)
+
+diff --git a/services/core/java/com/android/server/display/DisplayPowerController.java b/services/core/java/com/android/server/display/DisplayPowerController.java
+index 6fb7cd8173b..267a6138efd 100644
+--- a/services/core/java/com/android/server/display/DisplayPowerController.java
++++ b/services/core/java/com/android/server/display/DisplayPowerController.java
+@@ -520,7 +520,18 @@ final class DisplayPowerController implements AutomaticBrightnessController.Call
+             Sensor lightSensor = findDisplayLightSensor(lightSensorType);
+ 
+             mBrightnessMapper = BrightnessMappingStrategy.create(resources);
+-            if (mBrightnessMapper != null) {
++            /*
++             * Do not create the automatic brightness controller without a
++             * light sensor.  The W2017 sensors HAL currently enumerates no
++             * sensors, and a controller with a null sensor stays in the
++             * "sensor enabled but no lux" state forever: it keeps overriding
++             * the user's slider value (or pinning it to the minimum) and
++             * makes updatePowerState() needlessly expensive.  When the
++             * sensor is available again this branch creates the controller
++             * normally, so auto-brightness comes back without further
++             * changes.
++             */
++            if (mBrightnessMapper != null && lightSensor != null) {
+                 mAutomaticBrightnessController = new AutomaticBrightnessController(this,
+                         handler.getLooper(), sensorManager, lightSensor, mBrightnessMapper,
+                         lightSensorWarmUpTimeConfig, mScreenBrightnessRangeMinimum,
+@@ -529,6 +540,9 @@ final class DisplayPowerController implements AutomaticBrightnessController.Call
+                         autoBrightnessResetAmbientLuxAfterWarmUp, ambientBrightnessThresholds,
+                         screenBrightnessThresholds, context, displayDeviceConfig);
+             } else {
++                if (lightSensor == null) {
++                    Slog.w(TAG, "No display light sensor; software auto-brightness disabled");
++                }
+                 mUseSoftwareAutoBrightnessConfig = false;
+             }
+         }
+-- 
+2.53.0
+

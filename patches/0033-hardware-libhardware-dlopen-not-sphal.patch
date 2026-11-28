@@ -1,0 +1,23 @@
+diff --git a/hardware.c b/hardware.c
+index 6e72ce9f..42a903fb 100644
+--- a/hardware.c
++++ b/hardware.c
+@@ -97,11 +97,14 @@ static int load(const char *id,
+          */
+         handle = dlopen(path, RTLD_NOW);
+     } else {
+-#if defined(__ANDROID_RECOVERY__)
++        /* Load with plain dlopen() (the caller's namespace) instead of
++         * android_load_sphal_library(): the sphal namespace holds a second,
++         * namespace-private copy of the same .so, so a HAL that calls
++         * hw_get_module() for its own id (Samsung 6.0.1 sensors HAL does)
++         * gets a different hw_module_t than the one MultiHal / dlopen gave
++         * it, fails its "skip myself" pointer check and recurses until the
++         * stack overflows. */
+         handle = dlopen(path, RTLD_NOW);
+-#else
+-        handle = android_load_sphal_library(path, RTLD_NOW);
+-#endif
+     }
+     if (handle == NULL) {
+         char const *err_str = dlerror();
