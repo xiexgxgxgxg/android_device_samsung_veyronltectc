@@ -1,6 +1,6 @@
 # LineageOS 18.1 device tree — Samsung W2017 (SM-W2017 / veyronlte CTC)
 
-> **STATUS: BOOTS ON HARDWARE — display and input work, most peripherals do not (2026-11-18).**
+> **STATUS: 2026-11-18 历史快照 — 当时只有显示/输入可用；相机、传感器、LPM、GNSS/网络定位、SELinux 整改等后续进展以 `W2017_LineageOS18.1_问题清单.md` 为准。**
 >
 > The eng build boots to the LineageOS setup wizard on the phone: both panels
 > light up with the correct orientation, the folder hall switches between
@@ -30,6 +30,27 @@
 > declares it and nothing provides it; adding
 > `android.hardware.gnss@1.0-service` (the AOSP wrapper around the legacy
 > `gps.default.so` that the blob set already ships) is the next change.
+
+## ⚠ This device tree patches the LineageOS source tree
+
+This is **not** a self-contained device tree: building it **modifies the
+LineageOS/AOSP source projects**, because the files under `patches/` are applied
+to the checkouts before the build.
+
+* Mechanism: `patches/apply-patches.sh` (apply once per fresh tree, before
+  `source build-rom.sh` / `m`); the patches are the only record of these
+  changes, the AOSP checkouts themselves are expected to stay pristine.
+* Projects touched by `patches/` (33 patches as of 2026-11-29):
+  `hardware/interfaces`, `system/netd`, `system/libhidl`,
+  `external/wpa_supplicant_8`, `frameworks/opt/telephony`, `vendor/apn`,
+  `frameworks/base`, `frameworks/av`, `frameworks/native`, `system/core`,
+  `hardware/libhardware` and `packages/apps/Gallery2`.
+* A fresh `repo sync` **without** running the script will either fail to build
+  or produce a non-working image (Wi‑Fi/Bluetooth HAL, RIL, camera, audio,
+  ringtones, GNSS and the 3.18 capability/`sdcardfs` workarounds all depend on
+  it).
+* Read `patches/README.md` for what each patch does and why; review the patch
+  set together with this device tree, not with the upstream projects.
 
 ## Device
 

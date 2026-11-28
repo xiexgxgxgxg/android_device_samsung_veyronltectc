@@ -1,7 +1,11 @@
 # Local patches for projects outside the device/vendor/kernel repos
 
-LineageOS checkouts are read-only for us; anything that has to change inside
-an AOSP project is kept here as a patch and applied manually before a build.
+**This device tree modifies the LineageOS/AOSP source tree.**  The checkouts
+themselves are treated as read-only: every change that has to go into an AOSP
+project lives here as a patch and is applied to the checkout before a build
+(see `apply-patches.sh`).  A fresh `repo sync` is therefore *not* buildable for
+this device until the script has run, and the patch set is part of this device
+tree's source of truth — review it here, not in the upstream projects.
 
 ## 0001-hal-services-run-as-root-on-3.18.patch
 
