@@ -1,0 +1,23 @@
+diff --git a/src/com/android/gallery3d/data/MediaDetails.java b/src/com/android/gallery3d/data/MediaDetails.java
+index 7f32473af..d35ddfaf4 100755
+--- a/src/com/android/gallery3d/data/MediaDetails.java
++++ b/src/com/android/gallery3d/data/MediaDetails.java
+@@ -171,12 +171,12 @@ public class MediaDetails implements Iterable<Entry<Integer, Object>> {
+                     focalTag.getValueAsRational(0).toDouble());
+             details.setUnit(MediaDetails.INDEX_FOCAL_LENGTH, R.string.unit_mm);
+         }
+-        ExifTag latitudeTag = exif.getTag(ExifInterface.TAG_GPS_LATITUDE);
+-        ExifTag longitudeTag = exif.getTag(ExifInterface.TAG_GPS_LONGITUDE);
+-        if (latitudeTag != null && longitudeTag != null) {
+-            double latitude = latitudeTag.getValueAsRational(0).toDouble();
+-            double longitude = longitudeTag.getValueAsRational(0).toDouble();
+-            details.addDetail(MediaDetails.INDEX_LOCATION, new double[] {latitude, longitude});
++        // GPS coordinates are stored as three rationals (degrees, minutes,
++        // seconds); taking only element 0 used to drop the minutes/seconds and
++        // put the photo hundreds of km away (e.g. 43.83 N -> 43.0 N).
++        double[] latLong = exif.getLatLongAsDoubles();
++        if (latLong != null) {
++            details.addDetail(MediaDetails.INDEX_LOCATION, latLong);
+         }
+     }
+ }

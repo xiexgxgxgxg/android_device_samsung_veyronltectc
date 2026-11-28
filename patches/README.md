@@ -31,6 +31,18 @@ and Bluetooth reaches state ON with address FC:42:03:F1:33:08.
 Apply:
     (cd hardware/interfaces && git apply ../../device/samsung/veyronltectc/patches/0001-hal-services-run-as-root-on-3.18.patch)
 
+## 0019-gallery2-gps-latlong.patch (2026-11-28)
+
+`packages/apps/Gallery2`: `MediaDetails.extractExifInfo()` took only element 0 of
+the EXIF GPS rationals, i.e. the degrees component, dropping minutes/seconds.
+Every photo with GPS therefore showed an address hundreds of km away (43.83 N
+became 43.0 N, which lands near Liaoyuan instead of Changchun).  Use the
+existing `ExifInterface.getLatLongAsDoubles()` helper, which converts
+degrees/minutes/seconds and applies the N/S/E/W reference.
+
+Apply:
+    (cd packages/apps/Gallery2 && git apply ../../device/samsung/veyronltectc/patches/0019-gallery2-gps-latlong.patch)
+
 ## 0002-netd-run-as-root-on-3.18.patch
 
 `system/netd`: same 3.18 ambient-capability problem, but netd is the one that
