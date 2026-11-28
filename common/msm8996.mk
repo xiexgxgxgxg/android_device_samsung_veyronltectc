@@ -317,6 +317,13 @@ PRODUCT_PACKAGES += \
     netutils-wrapper-1.0
 
 # OMX
+# Software AVC encoder with the W2017 green-row fix (see
+# frameworks/av/media/codec2/components/avc/C2SoftAvcEnc.cpp).  The codec2
+# libraries live in the media.swcodec APEX, so ship a copy in /vendor and
+# bind-mount it over the APEX file in init.samsung.rc.
+PRODUCT_COPY_FILES += \
+    $(LOCAL_PATH)/prebuilt/lib64/libcodec2_soft_avcenc.so:$(TARGET_COPY_OUT_VENDOR)/lib64/libcodec2_soft_avcenc.so
+
 PRODUCT_PACKAGES += \
     libc2dcolorconvert \
     libextmedia_jni \
