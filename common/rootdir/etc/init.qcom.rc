@@ -593,12 +593,6 @@ service vendor.sensors /vendor/bin/sscrpcd
     group system
     disabled
 
-service vendor.sensors.qti /vendor/bin/sensors.qti
-    class core
-    user system
-    group system
-    disabled
-
 service factory_adsp /vendor/bin/factory.adsp
     class core
     user system
@@ -1086,3 +1080,16 @@ service sensorhubservice /vendor/bin/sensorhubservice
     class late_start
     user system
     group system input
+
+# Recycle the 6.0.1 camera stack after a capture session (API 6 daemon leaks an
+# ISP stream per JPEG capture).  The camera wrapper sets this property when a
+# session that captured a still image is closed.
+service camera_stack_reset /vendor/bin/camera_stack_reset.sh
+    class late_start
+    user root
+    group root system
+    oneshot
+    disabled
+
+on property:vendor.camera.stack_reset=1
+    start camera_stack_reset

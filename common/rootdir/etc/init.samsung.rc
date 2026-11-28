@@ -890,6 +890,15 @@ service vendor.sensors.qti /vendor/bin/sensors.qcom
 # /persist has to be a real mount point instead of the usual symlink to
 # /mnt/vendor/persist.  With the symlink the daemon aborts with
 # "sns_fsa_la.c(89): invalid directory path" and sensor1_open() fails.
+on post-fs
+    # The codec2 soft AVC encoder lives in the media.swcodec APEX; the one we
+    # ship in /vendor carries the green-row fix, so overlay it (see
+    # frameworks/av/media/codec2/components/avc/C2SoftAvcEnc.cpp).
+    mount none /vendor/lib64/libcodec2_soft_avcenc.so /apex/com.android.media.swcodec/lib64/libcodec2_soft_avcenc.so bind
+
 on post-fs-data
+    # May be a symlink left over in an incremental ramdisk; make sure the
+    # mount point is a real directory before bind-mounting over it.
+    rm /persist
     mkdir /persist 0771 system system
     mount none /mnt/vendor/persist /persist bind
