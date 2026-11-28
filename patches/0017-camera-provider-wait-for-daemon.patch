@@ -1,5 +1,5 @@
 diff --git a/camera/provider/2.4/default/LegacyCameraProviderImpl_2_4.cpp b/camera/provider/2.4/default/LegacyCameraProviderImpl_2_4.cpp
-index 4cff1b79a..0baf8a02b 100644
+index 4cff1b79a..a197eba5f 100644
 --- a/camera/provider/2.4/default/LegacyCameraProviderImpl_2_4.cpp
 +++ b/camera/provider/2.4/default/LegacyCameraProviderImpl_2_4.cpp
 @@ -27,6 +27,7 @@
@@ -65,12 +65,18 @@ index 4cff1b79a..0baf8a02b 100644
      camera_module_t *rawModule;
      int err = hw_get_module(CAMERA_HARDWARE_MODULE_ID,
              (const hw_module_t **)&rawModule);
-@@ -313,6 +345,9 @@ bool LegacyCameraProviderImpl_2_4::initialize() {
+@@ -313,6 +345,15 @@ bool LegacyCameraProviderImpl_2_4::initialize() {
      }
  
      mNumberOfLegacyCameras = mModule->getNumberOfCameras();
 +    if (mNumberOfLegacyCameras == 0) {
-+        ALOGW("%s: no camera reported by the HAL", __FUNCTION__);
++        /* The 6.0.1 HAL caches the camera count when its module is loaded.  If
++         * it was loaded before mm-qcamera-daemon finished probing the sensors
++         * the provider would stay at "0 cameras" for the whole boot and every
++         * camera app would fail to open a camera.  Exit so that init restarts
++         * us with the daemon already up. */
++        ALOGE("%s: no camera reported by the HAL, restarting provider", __FUNCTION__);
++        exit(1);
 +    }
      for (int i = 0; i < mNumberOfLegacyCameras; i++) {
          struct camera_info info;
