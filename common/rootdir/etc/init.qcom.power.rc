@@ -210,7 +210,16 @@ on property:init.svc.recovery=running
 
 service charger /system/bin/lpm
     class sec-charger
-    user system
+    # 3.18 has no ambient capabilities: with a "capabilities SYS_BOOT" line
+    # init leaves CapEff=0 after exec, so LPM cannot reboot/poweroff from the
+    # charging screen (and cannot write /efs/FactoryApp battery counters).
+    # Run as root without the caps line until the ambient-capability backport
+    # lands (see W2017_SELinux整改清单.md #4); the SELinux domain stays
+    # charger.
+    user root
     group system radio graphics input
-    capabilities SYS_BOOT
     seclabel u:r:charger:s0
+    # The stock 6.0.1 LPM links the 6.0.1 libpixelflinger, which still calls
+    # android_memset16/32(); bionic dropped those in Android 9.  The shim
+    # (device/samsung/veyronltectc/common/lpmcompat) provides them again.
+    setenv LD_PRELOAD /system/lib64/liblpmcompat.so

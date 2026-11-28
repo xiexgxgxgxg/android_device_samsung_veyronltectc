@@ -1,0 +1,10 @@
+// Compatibility shim for the stock 6.0.1 LPM (off-mode charging) binary.
+//
+// Samsung's libpixelflinger from Android 6 references android_memset16/32(),
+// which bionic exported until Android 9 and dropped afterwards.  The charger
+// service preloads this library so the 6.0.1 LPM still links on Android 11.
+cc_library_shared {
+    name: "liblpmcompat",
+    srcs: ["lpmcompat.c"],
+    cflags: ["-O2"],
+}

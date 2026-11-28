@@ -497,3 +497,44 @@ PRODUCT_SYSTEM_DEFAULT_PROPERTIES += \
 # Use speed for on-device dexopt so their first cold start is native code,
 # not the interpreter (see the JIT single-view workaround in art/).
 PRODUCT_DEX_PREOPT_DEFAULT_COMPILER_FILTER := speed
+
+# Off-mode charging (LPM).
+# Samsung's 6.0.1 lpm + its private libs/assets; the AOSP charger binary is a
+# different, much simpler UI.  liblpmcompat supplies the android_memset16/32
+# symbols that the 6.0.1 libpixelflinger still needs (see lpmcompat/).
+PRODUCT_COPY_FILES += \
+    $(LOCAL_PATH)/prebuilt/lpm/bin/lpm:$(TARGET_COPY_OUT_SYSTEM)/bin/lpm \
+    $(LOCAL_PATH)/prebuilt/lpm/lib64/libmaet.so:$(TARGET_COPY_OUT_SYSTEM)/lib64/libmaet.so \
+    $(LOCAL_PATH)/prebuilt/lpm/lib64/libsxqk_skia.so:$(TARGET_COPY_OUT_SYSTEM)/lib64/libsxqk_skia.so \
+    $(LOCAL_PATH)/prebuilt/lpm/lib64/libsxqk.so:$(TARGET_COPY_OUT_SYSTEM)/lib64/libsxqk.so \
+    $(LOCAL_PATH)/prebuilt/lpm/lib64/libpixelflinger.so:$(TARGET_COPY_OUT_SYSTEM)/lib64/libpixelflinger.so \
+    $(LOCAL_PATH)/prebuilt/lpm/media/afc_logo.spi:$(TARGET_COPY_OUT_SYSTEM)/media/afc_logo.spi \
+    $(LOCAL_PATH)/prebuilt/lpm/media/affordance_glow.spi:$(TARGET_COPY_OUT_SYSTEM)/media/affordance_glow.spi \
+    $(LOCAL_PATH)/prebuilt/lpm/media/affordance_glow_afc.spi:$(TARGET_COPY_OUT_SYSTEM)/media/affordance_glow_afc.spi \
+    $(LOCAL_PATH)/prebuilt/lpm/media/battery_cover.spi:$(TARGET_COPY_OUT_SYSTEM)/media/battery_cover.spi \
+    $(LOCAL_PATH)/prebuilt/lpm/media/battery_error.spi:$(TARGET_COPY_OUT_SYSTEM)/media/battery_error.spi \
+    $(LOCAL_PATH)/prebuilt/lpm/media/battery_low.spi:$(TARGET_COPY_OUT_SYSTEM)/media/battery_low.spi \
+    $(LOCAL_PATH)/prebuilt/lpm/media/battery_temperature_error.spi:$(TARGET_COPY_OUT_SYSTEM)/media/battery_temperature_error.spi \
+    $(LOCAL_PATH)/prebuilt/lpm/media/battery_temperature_limit.spi:$(TARGET_COPY_OUT_SYSTEM)/media/battery_temperature_limit.spi \
+    $(LOCAL_PATH)/prebuilt/lpm/media/dock_error.spi:$(TARGET_COPY_OUT_SYSTEM)/media/dock_error.spi \
+    $(LOCAL_PATH)/prebuilt/lpm/media/incompatible_charger.spi:$(TARGET_COPY_OUT_SYSTEM)/media/incompatible_charger.spi \
+    $(LOCAL_PATH)/prebuilt/lpm/media/lcd_density.txt:$(TARGET_COPY_OUT_SYSTEM)/media/lcd_density.txt \
+    $(LOCAL_PATH)/prebuilt/lpm/media/percentage.spi:$(TARGET_COPY_OUT_SYSTEM)/media/percentage.spi \
+    $(LOCAL_PATH)/prebuilt/lpm/media/wireless_A1.spi:$(TARGET_COPY_OUT_SYSTEM)/media/wireless_A1.spi \
+    $(LOCAL_PATH)/prebuilt/lpm/media/wireless_A1_afc.spi:$(TARGET_COPY_OUT_SYSTEM)/media/wireless_A1_afc.spi \
+    $(LOCAL_PATH)/prebuilt/lpm/media/wireless_A2.spi:$(TARGET_COPY_OUT_SYSTEM)/media/wireless_A2.spi \
+    $(LOCAL_PATH)/prebuilt/lpm/media/wireless_A2_afc.spi:$(TARGET_COPY_OUT_SYSTEM)/media/wireless_A2_afc.spi \
+    $(LOCAL_PATH)/prebuilt/lpm/media/wireless_B1.spi:$(TARGET_COPY_OUT_SYSTEM)/media/wireless_B1.spi \
+    $(LOCAL_PATH)/prebuilt/lpm/media/wireless_B1_afc.spi:$(TARGET_COPY_OUT_SYSTEM)/media/wireless_B1_afc.spi \
+    $(LOCAL_PATH)/prebuilt/lpm/media/wireless_B2.spi:$(TARGET_COPY_OUT_SYSTEM)/media/wireless_B2.spi \
+    $(LOCAL_PATH)/prebuilt/lpm/media/wireless_B2_afc.spi:$(TARGET_COPY_OUT_SYSTEM)/media/wireless_B2_afc.spi \
+    $(LOCAL_PATH)/prebuilt/lpm/media/wireless_C1.spi:$(TARGET_COPY_OUT_SYSTEM)/media/wireless_C1.spi \
+    $(LOCAL_PATH)/prebuilt/lpm/media/wireless_C1_afc.spi:$(TARGET_COPY_OUT_SYSTEM)/media/wireless_C1_afc.spi \
+    $(LOCAL_PATH)/prebuilt/lpm/media/wireless_C2.spi:$(TARGET_COPY_OUT_SYSTEM)/media/wireless_C2.spi \
+    $(LOCAL_PATH)/prebuilt/lpm/media/wireless_C2_afc.spi:$(TARGET_COPY_OUT_SYSTEM)/media/wireless_C2_afc.spi \
+    $(LOCAL_PATH)/prebuilt/lpm/media/wireless_C3.spi:$(TARGET_COPY_OUT_SYSTEM)/media/wireless_C3.spi \
+    $(LOCAL_PATH)/prebuilt/lpm/media/wireless_C3_afc.spi:$(TARGET_COPY_OUT_SYSTEM)/media/wireless_C3_afc.spi \
+    $(LOCAL_PATH)/prebuilt/lpm/media/wireless_C4.spi:$(TARGET_COPY_OUT_SYSTEM)/media/wireless_C4.spi \
+    $(LOCAL_PATH)/prebuilt/lpm/media/wireless_C4_afc.spi:$(TARGET_COPY_OUT_SYSTEM)/media/wireless_C4_afc.spi
+
+PRODUCT_PACKAGES += liblpmcompat
