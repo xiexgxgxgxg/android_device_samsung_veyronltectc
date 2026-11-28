@@ -387,7 +387,8 @@ PRODUCT_PACKAGES += \
     wifi_sec.rc \
     wifiloader \
     keypad_bl.sh \
-    keypad_bl.rc
+    keypad_bl.rc \
+    camera_stack_reset.sh
 
 # Recovery
 PRODUCT_COPY_FILES += \
